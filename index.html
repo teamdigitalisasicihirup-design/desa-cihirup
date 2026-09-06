@@ -868,6 +868,10 @@ footer strong{color:var(--blue)}
 .pemerintahan-table-wrap{overflow:auto;border:1px solid #e2ebf2;border-radius:14px}.pemerintahan-table{width:100%;border-collapse:collapse;min-width:760px;font-size:11px}.pemerintahan-table th,.pemerintahan-table td{padding:9px 10px;border-bottom:1px solid #e8eff4;text-align:left;vertical-align:top}.pemerintahan-table th{background:#f3f8fb;color:#587486;font-size:10px;position:sticky;top:0}.pemerintahan-table tr:last-child td{border-bottom:0}.pemerintahan-table tr:hover td{background:#fbfdff}.pemerintahan-loading,.pemerintahan-error,.pemerintahan-empty{padding:34px;text-align:center;color:#718696;font-size:12px}.pemerintahan-error{color:#a34242}.pemerintahan-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.pemerintahan-action{border:0;border-radius:10px;padding:9px 12px;background:#edf5fa;color:#176da9;font-size:10px;font-weight:800;cursor:pointer}.pemerintahan-action.primary{background:#176da9;color:#fff}.pemerintahan-foot{padding:12px 22px;border-top:1px solid #e5edf3;color:#7b8e9b;font-size:10px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 @media(max-width:900px){.pemerintahan-grid{grid-template-columns:1fr}.pemerintahan-stats{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:620px){.pemerintahan-modal{padding:8px}.pemerintahan-card{border-radius:18px;max-height:96vh}.pemerintahan-head,.pemerintahan-body{padding:15px}.pemerintahan-title h2{font-size:17px}.pemerintahan-structure,.pemerintahan-jabatan-list{grid-template-columns:1fr}.pemerintahan-dusun{grid-template-columns:1fr}.pemerintahan-person.top{grid-column:auto}}
+
+/* ---------- PENGATURAN APLIKASI V28 ---------- */
+.pengaturan-modal{position:fixed;inset:0;background:rgba(15,23,42,.58);z-index:1200;display:flex;align-items:center;justify-content:center;padding:18px}.pengaturan-modal.hidden{display:none}.pengaturan-card{width:min(980px,100%);max-height:92vh;overflow:hidden;background:#fff;border-radius:24px;box-shadow:0 24px 70px rgba(15,23,42,.25);display:flex;flex-direction:column}.pengaturan-head{padding:18px 22px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between}.pengaturan-head h2{margin:0;font-size:20px}.pengaturan-head p{margin:4px 0 0;color:#64748b;font-size:12px}.pengaturan-close{border:0;background:#f1f5f9;border-radius:12px;width:38px;height:38px;font-size:24px;cursor:pointer}.pengaturan-body{padding:20px;overflow:auto}.pengaturan-note{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;border-radius:14px;padding:12px 14px;font-size:12px;margin-bottom:16px}.pengaturan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.pengaturan-field{display:flex;flex-direction:column;gap:6px}.pengaturan-field.full{grid-column:1/-1}.pengaturan-field label{font-size:11px;font-weight:700;color:#334155}.pengaturan-field input,.pengaturan-field textarea{width:100%;box-sizing:border-box;border:1px solid #dbe3ef;border-radius:11px;padding:10px 12px;font:inherit;font-size:13px;outline:none}.pengaturan-field textarea{min-height:82px;resize:vertical}.pengaturan-field input:focus,.pengaturan-field textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 3px rgba(96,165,250,.14)}.pengaturan-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #e5e7eb}.pengaturan-btn{border:1px solid #dbe3ef;background:#fff;border-radius:11px;padding:10px 15px;font-weight:700;cursor:pointer}.pengaturan-btn.primary{background:#2563eb;color:#fff;border-color:#2563eb}.pengaturan-loading{text-align:center;padding:50px;color:#64748b}@media(max-width:700px){.pengaturan-grid{grid-template-columns:1fr}.pengaturan-field.full{grid-column:auto}.pengaturan-card{max-height:96vh}.pengaturan-body{padding:15px}}
+
 </style>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -3171,6 +3175,11 @@ function openModule(name){
     return;
   }
 
+  if(name === 'Pengaturan'){
+    openPengaturan();
+    return;
+  }
+
   if(name === 'Kependudukan'){
     openPopulation();
     return;
@@ -4933,6 +4942,43 @@ document.getElementById('serviceAdminRefresh').addEventListener('click',loadServ
 document.getElementById('serviceAdminSearch').addEventListener('input',renderServiceAdmin);
 document.getElementById('serviceAdminStatus').addEventListener('change',renderServiceAdmin);
 document.getElementById('serviceAdminModal').addEventListener('click',e=>{if(e.target.id==='serviceAdminModal')closeServiceAdmin();});
+
+/* ---------- PENGATURAN APLIKASI V28 ---------- */
+const pengaturanAdminRoles=['SUPER_ADMIN','KEPALA_DESA','SEKRETARIS_DESA'];
+let pengaturanData={};
+function openPengaturan(){const role=String(currentUser?.roleCode||'').toUpperCase();if(!pengaturanAdminRoles.includes(role)){toast('Akses Ditolak','Pengaturan hanya dapat dikelola Super Admin, Kepala Desa, atau Sekretaris Desa.');return;}document.getElementById('pengaturanModal').classList.remove('hidden');document.body.style.overflow='hidden';loadPengaturan();}
+function closePengaturan(){document.getElementById('pengaturanModal').classList.add('hidden');document.body.style.overflow='';}
+function setPengaturanValue(id,key){const el=document.getElementById(id);if(el)el.value=pengaturanData[key]??'';}
+function applyPengaturanForm(){setPengaturanValue('setNamaDesa','NAMA_DESA');setPengaturanValue('setKecamatan','KECAMATAN');setPengaturanValue('setKabupaten','KABUPATEN');setPengaturanValue('setProvinsi','PROVINSI');setPengaturanValue('setAlamat','ALAMAT_KANTOR');setPengaturanValue('setTelepon','TELEPON');setPengaturanValue('setEmail','EMAIL');setPengaturanValue('setWebsite','WEBSITE');setPengaturanValue('setTagline','TAGLINE');setPengaturanValue('setDeskripsi','DESKRIPSI');}
+async function loadPengaturan(){const body=document.querySelector('#pengaturanForm');if(body)body.style.opacity='.55';try{const r=await jsonp('pengaturan_get',{userId:currentUser.userCode,token:currentSession},12000);if(!r?.success){toast('Pengaturan',r?.message||'Gagal memuat pengaturan.');return;}pengaturanData=r.data||{};applyPengaturanForm();}catch(e){toast('Pengaturan','Gagal terhubung ke server.');}finally{if(body)body.style.opacity='';}}
+async function savePengaturan(e){e.preventDefault();const role=String(currentUser?.roleCode||'').toUpperCase();if(!pengaturanAdminRoles.includes(role)){toast('Akses Ditolak','Anda tidak memiliki hak mengubah pengaturan.');return;}const btn=document.getElementById('pengaturanSave');btn.disabled=true;btn.textContent='Menyimpan...';const payload={userId:currentUser.userCode,token:currentSession,namaDesa:document.getElementById('setNamaDesa').value.trim(),kecamatan:document.getElementById('setKecamatan').value.trim(),kabupaten:document.getElementById('setKabupaten').value.trim(),provinsi:document.getElementById('setProvinsi').value.trim(),alamat:document.getElementById('setAlamat').value.trim(),telepon:document.getElementById('setTelepon').value.trim(),email:document.getElementById('setEmail').value.trim(),website:document.getElementById('setWebsite').value.trim(),tagline:document.getElementById('setTagline').value.trim(),deskripsi:document.getElementById('setDeskripsi').value.trim()};try{const r=await jsonp('pengaturan_update',payload,15000);if(!r?.success){toast('Gagal',r?.message||'Pengaturan gagal disimpan.');return;}pengaturanData=r.data||pengaturanData;toast('Berhasil','Pengaturan aplikasi berhasil disimpan.');}catch(err){toast('Gagal','Tidak dapat menyimpan pengaturan.');}finally{btn.disabled=false;btn.textContent='Simpan Pengaturan';}}
+document.addEventListener('DOMContentLoaded',function(){document.getElementById('pengaturanClose')?.addEventListener('click',closePengaturan);document.getElementById('pengaturanCancel')?.addEventListener('click',closePengaturan);document.getElementById('pengaturanForm')?.addEventListener('submit',savePengaturan);});
+
 </script>
+
+<!-- PENGATURAN APLIKASI V28 -->
+<div class="pengaturan-modal hidden" id="pengaturanModal" role="dialog" aria-modal="true" aria-labelledby="pengaturanTitle">
+  <div class="pengaturan-card">
+    <div class="pengaturan-head"><div><h2 id="pengaturanTitle">Pengaturan Aplikasi</h2><p>Identitas dan informasi dasar SIAP LANCAR — PEMDES CIHIRUP.</p></div><button class="pengaturan-close" id="pengaturanClose" type="button">×</button></div>
+    <div class="pengaturan-body">
+      <div class="pengaturan-note">Perubahan di sini disimpan ke database dan menjadi sumber identitas resmi aplikasi. Pengelolaan hanya untuk Super Admin, Kepala Desa, dan Sekretaris Desa.</div>
+      <form id="pengaturanForm" autocomplete="off">
+        <div class="pengaturan-grid">
+          <div class="pengaturan-field"><label>Nama Desa *</label><input id="setNamaDesa" required maxlength="120"></div>
+          <div class="pengaturan-field"><label>Kecamatan *</label><input id="setKecamatan" required maxlength="120"></div>
+          <div class="pengaturan-field"><label>Kabupaten *</label><input id="setKabupaten" required maxlength="120"></div>
+          <div class="pengaturan-field"><label>Provinsi *</label><input id="setProvinsi" required maxlength="120"></div>
+          <div class="pengaturan-field full"><label>Alamat Kantor Desa</label><textarea id="setAlamat" maxlength="300"></textarea></div>
+          <div class="pengaturan-field"><label>Nomor Telepon</label><input id="setTelepon" maxlength="40"></div>
+          <div class="pengaturan-field"><label>Email Desa</label><input id="setEmail" type="email" maxlength="160"></div>
+          <div class="pengaturan-field"><label>Website</label><input id="setWebsite" type="url" maxlength="300" placeholder="https://..."></div>
+          <div class="pengaturan-field"><label>Tagline</label><input id="setTagline" maxlength="200" placeholder="Pelayanan Cepat, Transparan, dan Terpercaya"></div>
+          <div class="pengaturan-field full"><label>Keterangan / Deskripsi Singkat Desa</label><textarea id="setDeskripsi" maxlength="1000"></textarea></div>
+        </div>
+        <div class="pengaturan-actions"><button class="pengaturan-btn" type="button" id="pengaturanCancel">Tutup</button><button class="pengaturan-btn primary" type="submit" id="pengaturanSave">Simpan Pengaturan</button></div>
+      </form>
+    </div>
+  </div>
+</div>
 </body>
 </html>
