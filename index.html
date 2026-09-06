@@ -816,6 +816,11 @@ footer strong{color:var(--blue)}
 .service-admin-empty,.service-admin-loading,.service-admin-error{padding:38px;text-align:center;color:#7c91a0}.service-admin-foot{display:flex;justify-content:space-between;gap:10px;margin-top:12px;color:#7c91a0;font-size:11px}.service-admin-note{max-width:230px;white-space:normal;line-height:1.45;color:#617b8d}.service-admin-action.pdf{background:#e8f6ef;color:#13764a}.service-admin-pdf{display:block;margin-top:5px;font-size:10px;color:#6f8796}
 @media(max-width:800px){.service-admin-summary{grid-template-columns:repeat(2,1fr)}.service-admin-head{padding:18px}.service-admin-body{padding:18px}.service-admin-toolbar{flex-wrap:wrap}.service-admin-search{flex-basis:100%}.service-admin-foot{flex-direction:column}}
 
+
+.service-extra-fields{display:grid;gap:10px;margin:8px 0 2px;padding:12px;border:1px solid #dbeaf5;border-radius:14px;background:#f7fbfe}
+.service-extra-fields .extra-title{font-size:12px;font-weight:800;color:#164f7a;margin-bottom:2px}
+.service-extra-fields label{margin:0!important;font-size:12px!important}
+.service-extra-fields input,.service-extra-fields textarea{margin-top:4px}
 </style>
 </head>
 
@@ -1184,6 +1189,7 @@ footer strong{color:var(--blue)}
           <h3>✦ Ajukan Permohonan</h3>
           <label for="serviceCode">Jenis Layanan</label>
           <select id="serviceCode" required><option value="">Memuat layanan...</option></select>
+          <div id="serviceExtraFields" class="service-extra-fields"></div>
           <label for="serviceSubject">Keperluan / Judul</label>
           <input id="serviceSubject" maxlength="150" placeholder="Contoh: Keperluan administrasi keluarga" required>
           <label for="serviceDescription">Keterangan</label>
@@ -2969,6 +2975,28 @@ async function openCitizenServices(){
   if(!currentSession || String(currentUser?.roleCode||'').toUpperCase()!=='MASYARAKAT'){openLoginChooser('Silakan login sebagai masyarakat untuk menggunakan Layanan Masyarakat.');return;}
   showCitizenServiceModal(); await Promise.all([loadCitizenServices(),loadCitizenRequests()]);
 }
+
+function renderCitizenServiceExtraFields(code){
+  const wrap=document.getElementById('serviceExtraFields'); if(!wrap)return;
+  const c=String(code||'').toUpperCase(); let html='';
+  const inp=(id,label,ph,required=true,type='text')=>'<label>'+esc(label)+(required?' *':'')+'<input id="extra_'+id+'" type="'+type+'" '+(required?'required':'')+' placeholder="'+escAttr(ph)+'"></label>';
+  const ta=(id,label,ph,required=false)=>'<label>'+esc(label)+(required?' *':'')+'<textarea id="extra_'+id+'" '+(required?'required':'')+' placeholder="'+escAttr(ph)+'"></textarea></label>';
+  if(c==='USAHA') html='<div class="extra-title">Data Surat Keterangan Usaha</div>'+inp('usaha','Jenis pekerjaan / usaha','Contoh: Warung sembako / pedagang',true);
+  else if(c==='SKTM_BEASISWA') html='<div class="extra-title">Data Pendidikan</div>'+inp('pendidikan','Nama sekolah / perguruan tinggi','Contoh: SDN 2 Cihirup',true);
+  else if(c==='KEMATIAN') html='<div class="extra-title">Data Almarhum/Almarhumah</div>'+inp('namaMeninggal','Nama yang meninggal','Nama lengkap',true)+inp('nikMeninggal','NIK yang meninggal','16 digit NIK',true)+inp('jenisKelamin','Jenis kelamin','Laki-laki / Perempuan',true)+inp('hariTanggal','Hari, tanggal meninggal','Contoh: Senin, 7 September 2026',true)+inp('waktu','Waktu meninggal','Contoh: 14.30 WIB',true)+inp('tempatMeninggal','Tempat meninggal','Contoh: Rumah / RS ...',true)+ta('keterangan','Keterangan','Keterangan tambahan',false);
+  else if(c==='KELAHIRAN') html='<div class="extra-title">Data Anak yang Lahir</div>'+inp('namaAnak','Nama anak','Nama lengkap anak',true)+inp('tempatTglLahir','Tempat / tanggal lahir','Contoh: Kuningan, 7 September 2026',true)+inp('jenisKelamin','Jenis kelamin','Laki-laki / Perempuan',true)+inp('alamat','Alamat','Alamat tempat tinggal',true)+inp('namaAyah','Nama ayah','Nama lengkap ayah',true)+inp('namaIbu','Nama ibu','Nama lengkap ibu',true);
+  if(c==='DOMISILI') html='<div class="extra-title">Data akan diambil otomatis dari database PENDUDUK berdasarkan NIK.</div>';
+  if(c==='SKM_UMUM') html='<div class="extra-title">Data akan diambil otomatis dari database PENDUDUK berdasarkan NIK.</div>';
+  if(c==='PENGANTAR_DESA') html='<div class="extra-title">Isi keperluan surat pada kolom Keperluan / Judul.</div>';
+  wrap.innerHTML=html;
+}
+function collectCitizenServiceDetails(){
+  const code=document.getElementById('serviceCode').value.toUpperCase(); const d={};
+  const ids=['usaha','pendidikan','namaMeninggal','nikMeninggal','jenisKelamin','hariTanggal','waktu','tempatMeninggal','keterangan','namaAnak','tempatTglLahir','alamat','namaAyah','namaIbu'];
+  ids.forEach(id=>{const el=document.getElementById('extra_'+id);if(el)d[id]=el.value.trim();});
+  return d;
+}
+
 async function loadCitizenServices(){
   try{const r=await jsonp('citizen_services',{userId:currentUser.userCode,token:currentSession},12000);if(!r?.success)throw new Error(r?.message||'Daftar layanan gagal dimuat.');citizenServicesData=Array.isArray(r.services)?r.services:[];const sel=document.getElementById('serviceCode');sel.innerHTML='<option value="">Pilih jenis layanan...</option>'+citizenServicesData.map(x=>`<option value="${escAttr(x.code)}">${esc(x.name)}</option>`).join('');}catch(e){document.getElementById('serviceCode').innerHTML='<option value="">Gagal memuat layanan</option>';toast('Layanan Masyarakat',e.message||'Gagal memuat layanan.');}}
 async function loadCitizenRequests(){
@@ -2982,7 +3010,7 @@ function renderCitizenRequests(){
 }
 function formatDateValue(v){if(!v)return '-';const d=new Date(v);return isNaN(d)?String(v):d.toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
 async function submitCitizenService(e){
- e.preventDefault();if(!currentSession||!currentUser)return;const btn=document.getElementById('citizenSubmitBtn');const serviceCode=document.getElementById('serviceCode').value;const subject=document.getElementById('serviceSubject').value.trim();const description=document.getElementById('serviceDescription').value.trim();if(!serviceCode||subject.length<3||description.length<5){toast('Permohonan','Lengkapi jenis layanan, keperluan, dan keterangan.');return;}btn.disabled=true;btn.textContent='⏳ Mengirim...';try{const r=await jsonp('submit_service',{userId:currentUser.userCode,token:currentSession,serviceCode,subject,description},15000);if(!r?.success)throw new Error(r?.message||'Permohonan gagal dikirim.');document.getElementById('citizenServiceForm').reset();toast('Permohonan Berhasil','Nomor permohonan: '+(r.data?.number||'-'));await loadCitizenRequests();}catch(err){toast('Permohonan',err.message||'Permohonan gagal dikirim.');}finally{btn.disabled=false;btn.textContent='📨 Ajukan Permohonan';}}
+ e.preventDefault();if(!currentSession||!currentUser)return;const btn=document.getElementById('citizenSubmitBtn');const serviceCode=document.getElementById('serviceCode').value;const subject=document.getElementById('serviceSubject').value.trim();const description=document.getElementById('serviceDescription').value.trim();const details=collectCitizenServiceDetails();if(!serviceCode||subject.length<3||description.length<5){toast('Permohonan','Lengkapi jenis layanan, keperluan, dan keterangan.');return;}btn.disabled=true;btn.textContent='⏳ Mengirim...';try{const r=await jsonp('submit_service',{userId:currentUser.userCode,token:currentSession,serviceCode,subject,description,detailsJson:JSON.stringify(details)},15000);if(!r?.success)throw new Error(r?.message||'Permohonan gagal dikirim.');document.getElementById('citizenServiceForm').reset();renderCitizenServiceExtraFields('');toast('Permohonan Berhasil','Nomor permohonan: '+(r.data?.number||'-'));await loadCitizenRequests();}catch(err){toast('Permohonan',err.message||'Permohonan gagal dikirim.');}finally{btn.disabled=false;btn.textContent='📨 Ajukan Permohonan';}}
 
 /* ---------- MANAJEMEN AKUN MASYARAKAT ---------- */
 let citizenAdminData=[];
@@ -3441,6 +3469,7 @@ document.getElementById('perangkatDetailModal').addEventListener('click',e=>{
 
 document.getElementById('citizenServiceClose').addEventListener('click',closeCitizenServices);
 document.getElementById('citizenServiceModal').addEventListener('click',e=>{if(e.target.id==='citizenServiceModal')closeCitizenServices();});
+document.getElementById('serviceCode').addEventListener('change',e=>renderCitizenServiceExtraFields(e.target.value));
 document.getElementById('citizenServiceForm').addEventListener('submit',submitCitizenService);
 
 document.getElementById('citizenAdminClose').addEventListener('click',closeCitizenAdmin);
@@ -3523,10 +3552,10 @@ function renderServiceAdmin(){
    if(st==='DIAJUKAN'){actions+='<button class="service-admin-action process" data-sa="DIPROSES" data-id="'+escAttr(x.id)+'">▶ Proses</button>';actions+='<button class="service-admin-action reject" data-sa="DITOLAK" data-id="'+escAttr(x.id)+'">✕ Tolak</button>';}
    else if(st==='DIPROSES'){actions+='<button class="service-admin-action done" data-sa="SELESAI" data-id="'+escAttr(x.id)+'">✓ Selesai</button>';actions+='<button class="service-admin-action reject" data-sa="DITOLAK" data-id="'+escAttr(x.id)+'">✕ Tolak</button>';}
    else{actions+='<button class="service-admin-action reopen" data-sa="DIPROSES" data-id="'+escAttr(x.id)+'">↻ Proses Lagi</button>';}
-   if(x.pdfUrl){actions+='<button class="service-admin-action pdf" data-sa="PDF" data-id="'+escAttr(x.id)+'">🖨 PDF / Cetak</button>'; }
-   else if(st==='DIPROSES'||st==='SELESAI'){actions+='<button class="service-admin-action pdf" data-sa="MAKE_PDF" data-id="'+escAttr(x.id)+'">📄 Buat PDF</button>'; }
+   if(x.docUrl){actions+='<button class="service-admin-action pdf" data-sa="DOC" data-id="'+escAttr(x.id)+'">📝 Buka Surat</button>'; }
+   else if(st==='DIPROSES'||st==='SELESAI'){actions+='<button class="service-admin-action pdf" data-sa="MAKE_DOC" data-id="'+escAttr(x.id)+'">📝 Buat Surat</button>'; }
    actions+='<button class="service-admin-action note" data-sa="NOTE" data-id="'+escAttr(x.id)+'">✎ Catatan</button>';
-   const pdfInfo=x.pdfName?'<span class="service-admin-pdf">✓ '+esc(x.pdfName)+'</span>':'';
+   const pdfInfo=x.docName?'<span class="service-admin-pdf">✓ '+esc(x.docName)+'</span>':'';
    return '<tr><td><div class="number">'+esc(x.number||'-')+'</div></td><td><div class="person"><strong>'+esc(x.name||'-')+'</strong><small>NIK: '+esc(x.nik||'-')+'</small><small>'+esc(x.userCode||'')+'</small></div></td><td>'+esc(x.serviceName||'-')+'</td><td><strong>'+esc(x.subject||'-')+'</strong><br><span style="color:#7890a0">'+esc(x.description||'')+'</span></td><td>'+serviceAdminStatusLabel(st)+'</td><td><div class="service-admin-note">'+esc(x.note||'—')+'</div></td><td>'+serviceAdminDate(x.createdAt)+pdfInfo+'</td><td><div class="service-admin-actions">'+actions+'</div></td></tr>';
  }).join('')+'</tbody></table>';
  wrap.querySelectorAll('[data-sa]').forEach(btn=>btn.addEventListener('click',()=>handleServiceAdminAction(btn.dataset.sa,btn.dataset.id)));
@@ -3536,7 +3565,7 @@ async function loadServiceAdmin(){
  const wrap=document.getElementById('serviceAdminTableWrap');wrap.innerHTML='<div class="service-admin-loading">⟳ Mengambil permohonan masyarakat...</div>';
  try{const r=await jsonp('service_admin',{userId:currentUser.userCode,token:currentSession},15000);
    if(!r?.success){if(r?.code==='SESSION_INVALID'){clearSession();closeServiceAdmin();showLogin();setLoginStatus('Sesi telah berakhir. Silakan login kembali.','error');return;}throw new Error(r?.message||'Daftar permohonan gagal dimuat.');}
-   serviceAdminData=Array.isArray(r.data)?r.data:[];const s=r.summary||{};
+   serviceAdminData=(Array.isArray(r.data)?r.data:[]).map(x=>({...x,docUrl:x.docUrl||'',docName:x.docName||''}));const s=r.summary||{};
    document.getElementById('serviceAdminTotal').textContent=s.total??0;document.getElementById('serviceAdminPending').textContent=s.diajukan??0;document.getElementById('serviceAdminProcess').textContent=s.diproses??0;document.getElementById('serviceAdminDone').textContent=s.selesai??0;document.getElementById('serviceAdminRejected').textContent=s.ditolak??0;
    document.getElementById('serviceAdminInfo').textContent=serviceAdminData.length+' permohonan ditampilkan • diperbarui '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});renderServiceAdmin();
  }catch(err){wrap.innerHTML='<div class="service-admin-error">'+esc(err.message||'Gagal memuat permohonan.')+'</div>';toast('Administrasi Layanan',err.message||'Gagal memuat data.');}
@@ -3544,24 +3573,24 @@ async function loadServiceAdmin(){
 async function updateServiceRequest(id,status,note){return await jsonp('update_service_request',{userId:currentUser.userCode,token:currentSession,requestId:id,status:status,note:note||''},15000);}
 async function handleServiceAdminAction(action,id){
  const item=serviceAdminData.find(x=>String(x.id)===String(id));if(!item)return;
- if(action==='PDF'){if(item.pdfUrl){window.open(item.pdfUrl,'_blank');}else{toast('PDF Layanan','PDF belum tersedia.');}return;}
- if(action==='MAKE_PDF'){
+ if(action==='DOC'){if(item.docUrl){window.open(item.docUrl,'_blank');}else{toast('Surat Layanan','Surat belum tersedia.');}return;}
+ if(action==='MAKE_DOC'){
    const popup=window.open('about:blank','_blank');
-   if(popup)popup.document.write('<p style="font-family:Arial;padding:30px">Sedang membuat PDF layanan...</p>');
+   if(popup)popup.document.write('<p style="font-family:Arial;padding:30px">Sedang membuat surat layanan...</p>');
    try{
-     const r=await jsonp('generate_service_pdf',{userId:currentUser.userCode,token:currentSession,requestId:id},30000);
-     if(!r?.success)throw new Error(r?.message||'PDF gagal dibuat.');
+     const r=await jsonp('generate_service_doc',{userId:currentUser.userCode,token:currentSession,requestId:id},30000);
+     if(!r?.success)throw new Error(r?.message||'Surat gagal dibuat.');
      if(popup)popup.location.href=r.data.url;else window.open(r.data.url,'_blank');
-     toast('PDF Layanan','PDF berhasil dibuat. Silakan print dan tanda tangani.');
+     toast('Surat Layanan','Surat berhasil dibuat. Silakan buka, edit bila perlu, lalu print dan tanda tangani.');
      await loadServiceAdmin();
-   }catch(e){if(popup)popup.close();toast('PDF Layanan',e.message||'PDF gagal dibuat.');}
+   }catch(e){if(popup)popup.close();toast('Surat Layanan',e.message||'Surat gagal dibuat.');}
    return;
  }
  let status=action,note=item.note||'';
  if(action==='NOTE'){const next=prompt('Catatan admin untuk '+(item.number||'permohonan')+':',note);if(next===null)return;note=next.trim();status=String(item.status||'DIAJUKAN').toUpperCase();}
  else{const label={DIPROSES:'memproses',SELESAI:'menyelesaikan',DITOLAK:'menolak'}[status]||'mengubah status';if(!confirm('Yakin akan '+label+' permohonan '+(item.number||'-')+' milik '+(item.name||'-')+'?'))return;const entered=prompt('Catatan admin (opsional):',note);if(entered===null)return;note=entered.trim();}
  try{const r=await updateServiceRequest(id,status,note);if(!r?.success)throw new Error(r?.message||'Perubahan permohonan gagal.');toast('Administrasi Layanan',r.message||'Permohonan berhasil diperbarui.');await loadServiceAdmin();
-   if(r?.data?.pdf?.url){setTimeout(()=>window.open(r.data.pdf.url,'_blank'),250);}
+   if(r?.data?.doc?.url){setTimeout(()=>window.open(r.data.doc.url,'_blank'),250);}
  }catch(e){toast('Administrasi Layanan',e.message||'Perubahan permohonan gagal.');}
 }
 async function openServiceAdmin(){
