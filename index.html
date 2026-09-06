@@ -451,6 +451,85 @@ footer strong{color:var(--blue)}
   .presensi-history-item{grid-template-columns:1fr 1fr}
 }
 
+
+/* =========================================================
+   MONITORING PRESENSI PIMPINAN
+   ========================================================= */
+.monitor-modal{
+  position:fixed;inset:0;z-index:1200;display:grid;place-items:center;
+  padding:18px;background:rgba(4,35,66,.56);backdrop-filter:blur(6px);
+}
+.monitor-modal.hidden{display:none!important}
+.monitor-card{
+  width:min(1080px,100%);max-height:88vh;overflow:hidden;background:#fff;
+  border:1px solid var(--line);border-radius:24px;
+  box-shadow:0 30px 90px rgba(7,59,112,.3);display:flex;flex-direction:column;
+}
+.monitor-head{
+  display:flex;align-items:center;justify-content:space-between;gap:15px;
+  padding:18px 20px;border-bottom:1px solid var(--line);
+  background:linear-gradient(135deg,#f7fcff,#fffdf5);
+}
+.monitor-title{display:flex;align-items:center;gap:12px}
+.monitor-icon{
+  width:48px;height:48px;border-radius:15px;display:grid;place-items:center;
+  color:#fff;background:linear-gradient(145deg,var(--blue2),var(--navy));font-size:21px;
+}
+.monitor-title h2{font-size:19px;color:var(--navy)}
+.monitor-title p{font-size:11px;color:var(--muted);margin-top:3px}
+.monitor-close{
+  width:40px;height:40px;border:1px solid var(--line);border-radius:12px;
+  background:#fff;color:var(--navy);font-size:22px;cursor:pointer;
+}
+.monitor-summary{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px 18px;
+  border-bottom:1px solid var(--line);background:#fbfdff;
+}
+.monitor-stat{
+  border:1px solid var(--line);border-radius:13px;padding:11px 12px;background:#fff;
+}
+.monitor-stat label{display:block;font-size:9px;color:var(--muted);font-weight:900;text-transform:uppercase}
+.monitor-stat strong{display:block;font-size:20px;color:var(--navy);margin-top:3px}
+.monitor-stat small{font-size:9px;color:var(--muted)}
+.monitor-toolbar{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:12px 18px;border-bottom:1px solid var(--line);
+}
+.monitor-search{
+  height:38px;width:min(330px,60%);border:1px solid var(--line);border-radius:11px;
+  padding:0 12px;outline:none;
+}
+.monitor-refresh{
+  border:0;border-radius:10px;padding:9px 13px;background:var(--blue);color:#fff;
+  font-size:11px;font-weight:900;cursor:pointer;
+}
+.monitor-table-wrap{overflow:auto}
+.monitor-table{width:100%;border-collapse:collapse;min-width:760px}
+.monitor-table th{
+  position:sticky;top:0;background:#eef8ff;color:var(--navy);z-index:2;
+  font-size:10px;text-transform:uppercase;padding:11px;text-align:left;
+  border-bottom:1px solid var(--line);
+}
+.monitor-table td{
+  padding:10px 11px;font-size:11px;border-bottom:1px solid #edf3f8;color:var(--ink);
+}
+.monitor-badge{
+  display:inline-flex;padding:5px 8px;border-radius:99px;font-size:9px;font-weight:900;
+}
+.monitor-badge.complete{background:#eaf9f0;color:#18834b}
+.monitor-badge.present{background:#eaf4ff;color:#086bb6}
+.monitor-badge.absent{background:#fff1f0;color:#c63d32}
+.monitor-foot{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:12px 18px;border-top:1px solid var(--line);background:#fbfdff;
+  color:var(--muted);font-size:10px;
+}
+@media(max-width:700px){
+  .monitor-modal{padding:9px}.monitor-card{max-height:93vh;border-radius:18px}
+  .monitor-summary{grid-template-columns:repeat(2,1fr)}
+  .monitor-toolbar{flex-wrap:wrap}.monitor-search{width:100%;max-width:none}
+}
+
 </style>
 </head>
 
@@ -520,6 +599,7 @@ footer strong{color:var(--blue)}
     <button data-name="Pemerintahan Desa"><i>🏛</i>Pemerintahan Desa</button>
     <button data-name="Perangkat Desa"><i>♜</i>Perangkat Desa</button>
     <button data-name="Presensi Perangkat"><i>◷</i>Presensi Perangkat</button>
+    <button data-name="Monitoring Presensi"><i>▥</i>Monitoring Presensi</button>
     <button data-name="Pembangunan"><i>⌂</i>Pembangunan</button>
     <button data-name="Dokumen & Arsip"><i>▤</i>Dokumen & Arsip</button>
   </nav>
@@ -748,6 +828,43 @@ footer strong{color:var(--blue)}
           <div class="presensi-loading">Memuat riwayat...</div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="monitor-modal hidden" id="monitorPresensiModal" role="dialog" aria-modal="true" aria-labelledby="monitorTitle">
+  <div class="monitor-card">
+    <div class="monitor-head">
+      <div class="monitor-title">
+        <div class="monitor-icon">◷</div>
+        <div>
+          <h2 id="monitorTitle">Monitoring Presensi Perangkat</h2>
+          <p id="monitorDate">Data presensi perangkat desa hari ini</p>
+        </div>
+      </div>
+      <button class="monitor-close" id="monitorClose" type="button" aria-label="Tutup">×</button>
+    </div>
+
+    <div class="monitor-summary">
+      <div class="monitor-stat"><label>Total Perangkat</label><strong id="monitorTotal">—</strong><small>Perangkat aktif</small></div>
+      <div class="monitor-stat"><label>Sudah Hadir</label><strong id="monitorHadir">—</strong><small>Sudah presensi masuk</small></div>
+      <div class="monitor-stat"><label>Presensi Lengkap</label><strong id="monitorLengkap">—</strong><small>Masuk + pulang</small></div>
+      <div class="monitor-stat"><label>Belum Hadir</label><strong id="monitorBelum">—</strong><small>Belum presensi masuk</small></div>
+    </div>
+
+    <div class="monitor-toolbar">
+      <input class="monitor-search" id="monitorSearch" type="search" placeholder="Cari nama, jabatan, dusun, status...">
+      <button class="monitor-refresh" id="monitorRefresh" type="button">↻ Segarkan</button>
+    </div>
+
+    <div class="monitor-table-wrap" id="monitorTableWrap">
+      <div class="data-loading">Memuat monitoring presensi...</div>
+    </div>
+
+    <div class="monitor-foot">
+      <span id="monitorSource">Sumber: PRESENSI_PERANGKAT + PERANGKAT_DESA</span>
+      <span>Hak akses: Kepala Desa / Sekretaris Desa</span>
     </div>
   </div>
 </div>
@@ -1028,6 +1145,10 @@ function openModule(name){
   }
   if(name === 'Presensi Perangkat'){
     openPresensiPerangkat();
+    return;
+  }
+  if(name === 'Monitoring Presensi'){
+    openMonitoringPresensi();
     return;
   }
   toast(name,'Modul "' + name + '" sudah masuk arsitektur SIAP LANCAR dan akan diaktifkan bertahap.');
@@ -1455,6 +1576,129 @@ async function doPresensiAction(){
   }
 }
 
+
+let monitoringPresensi = [];
+
+function showMonitoringModal(){
+  document.getElementById('monitorPresensiModal').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+}
+
+function closeMonitoringModal(){
+  document.getElementById('monitorPresensiModal').classList.add('hidden');
+  document.body.style.overflow='';
+}
+
+function renderMonitoringPresensi(){
+  const q = document.getElementById('monitorSearch').value.toLowerCase().trim();
+  const wrap = document.getElementById('monitorTableWrap');
+
+  let rows = monitoringPresensi;
+  if(q){
+    rows = rows.filter(item =>
+      [
+        item.nama,item.jabatanCode,item.dusunCode,item.userCode,
+        item.status,item.jamMasuk,item.jamPulang
+      ].some(v => String(v || '').toLowerCase().includes(q))
+    );
+  }
+
+  if(!monitoringPresensi.length){
+    wrap.innerHTML='<div class="data-empty">Belum ada data perangkat aktif.</div>';
+    return;
+  }
+
+  const badge = status => {
+    const cls = status === 'LENGKAP'
+      ? 'complete'
+      : (status === 'SUDAH HADIR' ? 'present' : 'absent');
+    return '<span class="monitor-badge '+cls+'">'+esc(status)+'</span>';
+  };
+
+  const body = rows.map(item =>
+    '<tr>' +
+      '<td><strong>'+esc(item.nama || '-')+'</strong><br><small>'+esc(item.userCode || '')+'</small></td>' +
+      '<td>'+esc(roleLabel(item.jabatanCode || '-'))+'</td>' +
+      '<td>'+esc(item.dusunCode || '-')+'</td>' +
+      '<td>'+badge(item.status || 'BELUM HADIR')+'</td>' +
+      '<td>'+esc(item.jamMasuk || '—')+'</td>' +
+      '<td>'+esc(item.jamPulang || '—')+'</td>' +
+    '</tr>'
+  ).join('');
+
+  wrap.innerHTML =
+    '<table class="monitor-table"><thead><tr>' +
+      '<th>Perangkat</th><th>Jabatan</th><th>Dusun</th><th>Status</th><th>Jam Masuk</th><th>Jam Pulang</th>' +
+    '</tr></thead><tbody>' +
+      (body || '<tr><td colspan="6">Tidak ada data sesuai pencarian.</td></tr>') +
+    '</tbody></table>';
+}
+
+async function loadMonitoringPresensi(){
+  const wrap = document.getElementById('monitorTableWrap');
+
+  if(!currentSession || !currentUser?.userCode){
+    wrap.innerHTML='<div class="data-error">Sesi pengguna tidak tersedia. Silakan login kembali.</div>';
+    return;
+  }
+
+  const role = String(currentUser.roleCode || '').toUpperCase();
+  if(!['SUPER_ADMIN','KEPALA_DESA','SEKRETARIS_DESA'].includes(role)){
+    wrap.innerHTML='<div class="data-error">Anda tidak memiliki hak akses monitoring presensi.</div>';
+    return;
+  }
+
+  wrap.innerHTML='<div class="data-loading">⟳ Mengambil rekap presensi hari ini...</div>';
+
+  try{
+    const result = await jsonp('presensi_monitor_today',{
+      userId: currentUser.userCode,
+      token: currentSession
+    },15000);
+
+    if(!result || !result.success){
+      if(result?.authenticated === false || result?.code === 'SESSION_INVALID'){
+        clearSession();
+        closeMonitoringModal();
+        showLogin();
+        setLoginStatus('Sesi telah berakhir. Silakan login kembali.','error');
+        return;
+      }
+      throw new Error(result?.message || 'Monitoring presensi gagal dimuat.');
+    }
+
+    monitoringPresensi = Array.isArray(result.data) ? result.data : [];
+
+    document.getElementById('monitorTotal').textContent = result.summary?.total ?? monitoringPresensi.length;
+    document.getElementById('monitorHadir').textContent = result.summary?.sudahHadir ?? 0;
+    document.getElementById('monitorLengkap').textContent = result.summary?.lengkap ?? 0;
+    document.getElementById('monitorBelum').textContent = result.summary?.belumHadir ?? 0;
+    document.getElementById('monitorDate').textContent =
+      'Tanggal '+esc(result.today || '-')+' • Waktu server '+esc(result.serverTime || '-');
+
+    renderMonitoringPresensi();
+
+    document.getElementById('monitorSource').textContent =
+      'Sumber: PRESENSI_PERANGKAT + PERANGKAT_DESA • Sinkronisasi '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+
+  }catch(err){
+    wrap.innerHTML='<div class="data-error">'+esc(err.message || 'Monitoring gagal dimuat.')+'</div>';
+    toast('Monitoring Presensi',err.message || 'Monitoring gagal dimuat.');
+  }
+}
+
+async function openMonitoringPresensi(){
+  const role = String(currentUser?.roleCode || '').toUpperCase();
+
+  if(!['SUPER_ADMIN','KEPALA_DESA','SEKRETARIS_DESA'].includes(role)){
+    toast('Akses Ditolak','Monitoring presensi hanya untuk Kepala Desa, Sekretaris Desa, atau Super Admin.');
+    return;
+  }
+
+  showMonitoringModal();
+  await loadMonitoringPresensi();
+}
+
 async function openPresensiPerangkat(){
   showPresensiModal();
   document.getElementById('presensiNama').textContent =
@@ -1540,6 +1784,14 @@ document.getElementById('pin').addEventListener('keydown',e=>{
 
 
 document.getElementById('perangkatModalClose').addEventListener('click',closePerangkatModal);
+
+document.getElementById('monitorClose').addEventListener('click',closeMonitoringModal);
+document.getElementById('monitorRefresh').addEventListener('click',loadMonitoringPresensi);
+document.getElementById('monitorSearch').addEventListener('input',renderMonitoringPresensi);
+document.getElementById('monitorPresensiModal').addEventListener('click',e=>{
+  if(e.target.id === 'monitorPresensiModal') closeMonitoringModal();
+});
+
 
 document.getElementById('detailClose').addEventListener('click',closePerangkatDetail);
 
