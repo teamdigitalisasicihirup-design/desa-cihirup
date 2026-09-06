@@ -421,7 +421,7 @@ footer strong{color:var(--blue)}
 .presensi-box label{display:block;color:var(--muted);font-size:10px;font-weight:900;text-transform:uppercase}
 .presensi-time{font-size:28px;font-weight:950;color:var(--navy);margin-top:7px}
 .presensi-state{font-size:11px;color:var(--muted);margin-top:5px}
-.presensi-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.presensi-actions{display:grid;grid-template-columns:1fr;gap:12px;margin-top:14px}
 .presensi-btn{
   border:0;border-radius:14px;padding:13px 14px;font-weight:950;cursor:pointer;
 }
@@ -447,7 +447,7 @@ footer strong{color:var(--blue)}
   .presensi-modal{padding:9px}
   .presensi-card{max-height:94vh;border-radius:18px}
   .presensi-profile{align-items:flex-start;flex-direction:column}
-  .presensi-today,.presensi-actions{grid-template-columns:1fr}
+  .presensi-today{grid-template-columns:1fr}
   .presensi-history-item{grid-template-columns:1fr 1fr}
 }
 
@@ -726,7 +726,7 @@ footer strong{color:var(--blue)}
         <div class="presensi-icon">◷</div>
         <div>
           <h2 id="presensiTitle">Presensi Perangkat</h2>
-          <p>Presensi masuk, pulang, dan riwayat kehadiran</p>
+          <p>Satu tombol presensi • Masuk 06.00–08.00 • Pulang 14.20–18.00</p>
         </div>
       </div>
       <button class="presensi-close" id="presensiClose" type="button" aria-label="Tutup">×</button>
@@ -1270,43 +1270,73 @@ function closePresensiModal(){
   document.body.style.overflow='';
 }
 
+function getPresensiClientTime(){
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes();
+}
+
+function getPresensiWindow(){
+  const m = getPresensiClientTime();
+  if(m < 360) return {mode:'WAIT',label:'PRESENSI BELUM DIMULAI',message:'Jam presensi belum dimulai'};
+  if(m <= 480) return {mode:'MASUK',label:'PRESENSI MASUK',message:'Presensi masuk aktif'};
+  if(m < 860) return {mode:'WAIT',label:'MENUNGGU PRESENSI PULANG',message:'Presensi pulang dimulai pukul 14.20'};
+  if(m <= 1080) return {mode:'PULANG',label:'PRESENSI PULANG',message:'Presensi pulang aktif'};
+  return {mode:'WAIT',label:'PRESENSI PULANG SUDAH LEWAT',message:'Presensi pulang sudah lewat'};
+}
+
 function renderPresensiToday(){
   const wrap = document.getElementById('presensiContent');
   const pill = document.getElementById('presensiStatusPill');
+  const win = getPresensiWindow();
+  const jamMasuk = String(presensiToday?.JAM_MASUK || '').trim();
+  const jamPulang = String(presensiToday?.JAM_PULANG || '').trim();
+  const status = String(presensiToday?.STATUS || 'HADIR').trim().toUpperCase();
 
-  if(!presensiToday){
-    wrap.innerHTML =
-      '<div class="presensi-today">' +
-        '<div class="presensi-box"><label>Jam Masuk</label><div class="presensi-time">—</div><div class="presensi-state">Belum presensi masuk</div></div>' +
-        '<div class="presensi-box"><label>Jam Pulang</label><div class="presensi-time">—</div><div class="presensi-state">Belum presensi pulang</div></div>' +
-      '</div>' +
-      '<textarea id="presensiNote" class="presensi-note" placeholder="Keterangan (opsional)"></textarea>' +
-      '<div class="presensi-actions">' +
-        '<button class="presensi-btn in" type="button" onclick="doPresensiCheckIn()">◷ Presensi Masuk</button>' +
-        '<button class="presensi-btn out" type="button" disabled>◷ Presensi Pulang</button>' +
-      '</div>';
-    pill.textContent='● BELUM PRESENSI';
-    return;
+  let buttonLabel = win.label;
+  let buttonClass = win.mode === 'PULANG' ? 'out' : 'in';
+  let disabled = false;
+  let stateMessage = win.message;
+
+  if(jamPulang){
+    buttonLabel = 'PRESENSI HARI INI SELESAI';
+    disabled = true;
+    stateMessage = 'Presensi masuk dan pulang sudah tercatat.';
+    pill.textContent='● PRESENSI LENGKAP';
+  }else if(win.mode === 'MASUK' && jamMasuk){
+    buttonLabel = 'PRESENSI MASUK SUDAH TERCATAT';
+    disabled = true;
+    stateMessage = 'Presensi masuk sudah tercatat. Presensi pulang dibuka pukul 14.20.';
+    pill.textContent='● SUDAH PRESENSI MASUK';
+  }else if(win.mode === 'PULANG' && !jamMasuk){
+    buttonLabel = 'PRESENSI PULANG';
+    disabled = true;
+    stateMessage = 'Presensi masuk belum tercatat.';
+    pill.textContent='● PRESENSI MASUK BELUM ADA';
+  }else if(win.mode === 'WAIT'){
+    disabled = true;
+    pill.textContent = win.message === 'Jam presensi belum dimulai'
+      ? '● BELUM DIMULAI'
+      : (win.message === 'Presensi pulang sudah lewat' ? '● SUDAH LEWAT' : '● MENUNGGU');
+  }else if(win.mode === 'MASUK'){
+    pill.textContent='● WAKTU MASUK AKTIF';
+  }else if(win.mode === 'PULANG'){
+    pill.textContent='● WAKTU PULANG AKTIF';
   }
-
-  const jamMasuk = String(presensiToday.JAM_MASUK || '').trim();
-  const jamPulang = String(presensiToday.JAM_PULANG || '').trim();
-  const status = String(presensiToday.STATUS || 'HADIR').trim().toUpperCase();
 
   wrap.innerHTML =
     '<div class="presensi-today">' +
-      '<div class="presensi-box"><label>Jam Masuk</label><div class="presensi-time">'+esc(jamMasuk || '—')+'</div><div class="presensi-state">'+esc(status)+'</div></div>' +
-      '<div class="presensi-box"><label>Jam Pulang</label><div class="presensi-time">'+esc(jamPulang || '—')+'</div><div class="presensi-state">'+(jamPulang ? 'Presensi pulang tercatat' : 'Belum presensi pulang')+'</div></div>' +
+      '<div class="presensi-box"><label>Jam Masuk</label><div class="presensi-time">'+esc(jamMasuk || '—')+'</div><div class="presensi-state">'+esc(jamMasuk ? status : 'Belum presensi masuk')+'</div></div>' +
+      '<div class="presensi-box"><label>Jam Pulang</label><div class="presensi-time">'+esc(jamPulang || '—')+'</div><div class="presensi-state">'+esc(jamPulang ? 'Presensi pulang tercatat' : 'Belum presensi pulang')+'</div></div>' +
     '</div>' +
-    '<textarea id="presensiNote" class="presensi-note" placeholder="Tambahkan keterangan (opsional)">'+esc(String(presensiToday.KETERANGAN || ''))+'</textarea>' +
+    '<div class="presensi-box" style="margin-top:12px;background:#f7fcff">' +
+      '<label>Jadwal Presensi</label>' +
+      '<div class="presensi-state" style="margin-top:8px"><strong style="color:var(--navy)">Masuk:</strong> 06.00–08.00 &nbsp; • &nbsp; <strong style="color:var(--navy)">Pulang:</strong> 14.20–18.00</div>' +
+      '<div class="presensi-state" style="margin-top:5px">'+esc(stateMessage)+'</div>' +
+    '</div>' +
+    '<textarea id="presensiNote" class="presensi-note" placeholder="Keterangan (opsional)">'+esc(String(presensiToday?.KETERANGAN || ''))+'</textarea>' +
     '<div class="presensi-actions">' +
-      '<button class="presensi-btn in" type="button" '+(jamMasuk?'disabled':'')+' onclick="doPresensiCheckIn()">◷ Presensi Masuk</button>' +
-      '<button class="presensi-btn out" type="button" '+(!jamMasuk || jamPulang?'disabled':'')+' onclick="doPresensiCheckOut()">◷ Presensi Pulang</button>' +
+      '<button class="presensi-btn '+buttonClass+'" type="button" '+(disabled?'disabled':'onclick="doPresensiAction()"')+'>'+esc(buttonLabel)+'</button>' +
     '</div>';
-
-  if(jamPulang) pill.textContent='● PRESENSI LENGKAP';
-  else if(jamMasuk) pill.textContent='● SUDAH MASUK';
-  else pill.textContent='● BELUM PRESENSI';
 }
 
 async function loadPresensiToday(){
@@ -1380,49 +1410,48 @@ async function refreshPresensi(){
   }
 }
 
-async function doPresensiCheckIn(){
+async function doPresensiAction(){
   const note = document.getElementById('presensiNote')?.value?.trim() || '';
+  const win = getPresensiWindow();
 
-  try{
-    const result = await jsonp('presensi_checkin',{
-      userId: currentUser.userCode,
-      token: currentSession,
-      keterangan: note
-    },12000);
-
-    if(!result || !result.success){
-      throw new Error(result?.message || 'Presensi masuk gagal.');
-    }
-
-    presensiToday = result.attendance || null;
-    renderPresensiToday();
-    await loadPresensiHistory();
-    toast('Presensi Masuk','Presensi masuk berhasil dicatat.');
-  }catch(err){
-    toast('Presensi Masuk',err.message || 'Presensi masuk gagal.');
+  if(win.mode === 'WAIT'){
+    toast('Presensi', win.message);
+    return;
   }
-}
 
-async function doPresensiCheckOut(){
-  const note = document.getElementById('presensiNote')?.value?.trim() || '';
+  if(win.mode === 'PULANG' && !String(presensiToday?.JAM_MASUK || '').trim()){
+    toast('Presensi Pulang','Presensi masuk belum tercatat. Presensi pulang tidak dapat dicatat.');
+    return;
+  }
 
   try{
-    const result = await jsonp('presensi_checkout',{
+    const result = await jsonp('presensi_action',{
       userId: currentUser.userCode,
       token: currentSession,
       keterangan: note
     },12000);
 
     if(!result || !result.success){
-      throw new Error(result?.message || 'Presensi pulang gagal.');
+      if(result?.authenticated === false || result?.code === 'SESSION_INVALID'){
+        clearSession();
+        closePresensiModal();
+        showLogin();
+        setLoginStatus('Sesi telah berakhir. Silakan login kembali.','error');
+        return;
+      }
+      throw new Error(result?.message || 'Presensi gagal.');
     }
 
-    presensiToday = result.attendance || null;
+    presensiToday = result.attendance || presensiToday;
     renderPresensiToday();
     await loadPresensiHistory();
-    toast('Presensi Pulang','Presensi pulang berhasil dicatat.');
+
+    toast(
+      result.action === 'PULANG' ? 'Presensi Pulang' : 'Presensi Masuk',
+      result.message || 'Presensi berhasil dicatat.'
+    );
   }catch(err){
-    toast('Presensi Pulang',err.message || 'Presensi pulang gagal.');
+    toast('Presensi',err.message || 'Presensi gagal.');
   }
 }
 
