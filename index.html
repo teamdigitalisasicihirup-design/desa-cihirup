@@ -762,6 +762,24 @@ footer strong{color:var(--blue)}
   font-weight:900;
 }
 
+
+/* =========================================================
+   REGISTRASI AKUN MASYARAKAT
+   ========================================================= */
+.citizen-register-btn .choice-icon{
+  background:linear-gradient(145deg,#3b9b76,#116446);
+}
+.registration-note{
+  margin:10px 0 13px;
+  padding:10px 11px;
+  border:1px solid #d9eaf5;
+  border-radius:12px;
+  background:#f6fbff;
+  color:var(--muted);
+  font-size:8px;
+  line-height:1.55;
+}
+
 </style>
 </head>
 
@@ -794,6 +812,15 @@ footer strong{color:var(--blue)}
         <span>
           <strong>Masuk sebagai Masyarakat</strong>
           <small>Akses layanan masyarakat, permohonan, dan pengaduan.</small>
+        </span>
+        <b>›</b>
+      </button>
+
+      <button class="login-choice-btn citizen-register-btn" type="button" id="citizenRegisterChoice">
+        <span class="choice-icon">✎</span>
+        <span>
+          <strong>Daftar Akun Masyarakat</strong>
+          <small>Belum memiliki akun? Daftarkan akun menggunakan NIK dan PIN.</small>
         </span>
         <b>›</b>
       </button>
@@ -832,6 +859,68 @@ footer strong{color:var(--blue)}
       </button>
 
       <div class="login-status" id="loginStatus"></div>
+    </form>
+
+
+    <form class="login-form hidden" id="citizenRegisterForm" autocomplete="off">
+
+      <div class="login-access-badge">
+        ✎ PENDAFTARAN AKUN MASYARAKAT
+      </div>
+
+      <div class="registration-note">
+        Gunakan data yang benar. Setelah pendaftaran, akun akan
+        menunggu verifikasi perangkat desa sebelum dapat digunakan untuk login.
+      </div>
+
+      <div class="field">
+        <label for="regNik">NIK</label>
+        <input id="regNik" name="regNik" type="text"
+               inputmode="numeric" maxlength="16"
+               placeholder="Masukkan 16 digit NIK"
+               autocomplete="off" required>
+      </div>
+
+      <div class="field">
+        <label for="regFullName">Nama Lengkap</label>
+        <input id="regFullName" name="regFullName" type="text"
+               maxlength="100"
+               placeholder="Masukkan nama lengkap sesuai identitas"
+               autocomplete="name" required>
+      </div>
+
+      <div class="field">
+        <label for="regPin">PIN Baru</label>
+        <div class="pin-wrap">
+          <input id="regPin" name="regPin" type="password"
+                 inputmode="numeric" maxlength="6"
+                 placeholder="6 digit PIN"
+                 autocomplete="new-password" required>
+          <button type="button" class="pin-toggle" id="regPinToggle">👁</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="regConfirmPin">Konfirmasi PIN</label>
+        <div class="pin-wrap">
+          <input id="regConfirmPin" name="regConfirmPin" type="password"
+                 inputmode="numeric" maxlength="6"
+                 placeholder="Ulangi 6 digit PIN"
+                 autocomplete="new-password" required>
+          <button type="button" class="pin-toggle" id="regConfirmPinToggle">👁</button>
+        </div>
+      </div>
+
+      <button class="login-btn" id="registerCitizenBtn" type="submit">
+        ✎ Daftar Akun Masyarakat
+      </button>
+
+      <button class="login-back-public" type="button" id="registerBackChoice">
+        ← Kembali ke pilihan login
+      </button>
+
+      <div class="login-status" id="registerStatus"></div>
+
     </form>
 
     <div class="login-foot">
@@ -2748,8 +2837,301 @@ async function openPresensiPerangkat(){
   await refreshPresensi();
 }
 
+
+/* ---------- REGISTRASI MASYARAKAT ---------- */
+
+function openCitizenRegistration(){
+
+  setDashboardMode('PUBLIC');
+
+  document.getElementById('loginChooser')
+    .classList.add('hidden');
+
+  document.getElementById('loginForm')
+    .classList.add('hidden');
+
+  document.getElementById('citizenRegisterForm')
+    .classList.remove('hidden');
+
+  document.getElementById('loginHeading')
+    .textContent =
+      'Daftar Akun Masyarakat';
+
+  document.getElementById('loginSubheading')
+    .textContent =
+      'Buat akun untuk menggunakan layanan digital Desa Cihirup.';
+
+  document.getElementById('registerStatus')
+    .textContent = '';
+
+  document.getElementById('regNik').value = '';
+  document.getElementById('regFullName').value = '';
+  document.getElementById('regPin').value = '';
+  document.getElementById('regConfirmPin').value = '';
+
+  setTimeout(()=>{
+    document.getElementById('regNik').focus();
+  },50);
+}
+
+
+function closeCitizenRegistration(){
+
+  document.getElementById('citizenRegisterForm')
+    .classList.add('hidden');
+
+  document.getElementById('loginChooser')
+    .classList.remove('hidden');
+
+  document.getElementById('loginHeading')
+    .textContent =
+      'Masuk SIAP LANCAR';
+
+  document.getElementById('loginSubheading')
+    .textContent =
+      'Pilih jenis akses untuk melanjutkan.';
+
+  document.getElementById('registerStatus')
+    .textContent = '';
+}
+
+
+async function registerCitizen(
+  nik,
+  fullName,
+  pin,
+  confirmPin
+){
+
+  const btn =
+    document.getElementById(
+      'registerCitizenBtn'
+    );
+
+  const status =
+    document.getElementById(
+      'registerStatus'
+    );
+
+  btn.disabled = true;
+
+  btn.textContent =
+    '⏳ Mendaftarkan...';
+
+  status.className =
+    'login-status';
+
+  status.textContent =
+    'Menghubungkan ke server CIHIRUP LINK...';
+
+  try{
+
+    const result =
+      await jsonp(
+        'register_citizen',
+        {
+          nik:nik,
+          fullName:fullName,
+          pin:pin,
+          confirmPin:confirmPin
+        },
+        15000
+      );
+
+    if(
+      result &&
+      result.success &&
+      result.registered
+    ){
+
+      status.className =
+        'login-status ok';
+
+      status.textContent =
+        '✓ Registrasi berhasil. Akun '+
+        (result.user?.userCode || '')+
+        ' menunggu verifikasi perangkat desa.';
+
+      document.getElementById(
+        'regPin'
+      ).value = '';
+
+      document.getElementById(
+        'regConfirmPin'
+      ).value = '';
+
+      toast(
+        'Registrasi Berhasil',
+        'Akun masyarakat berhasil dibuat dan menunggu verifikasi.'
+      );
+
+      setTimeout(()=>{
+        closeCitizenRegistration();
+      },2200);
+
+      return true;
+    }
+
+    status.className =
+      'login-status error';
+
+    status.textContent =
+      result?.message ||
+      'Registrasi gagal.';
+
+    return false;
+
+  }catch(error){
+
+    status.className =
+      'login-status error';
+
+    status.textContent =
+      error.message ||
+      'Gagal terhubung ke server.';
+
+    return false;
+
+  }finally{
+
+    btn.disabled = false;
+
+    btn.textContent =
+      '✎ Daftar Akun Masyarakat';
+
+  }
+}
+
+
+
 /* ---------- EVENTS ---------- */
 document.getElementById('publicLoginBtn').addEventListener('click',()=>openLoginChooser());
+
+document.getElementById('citizenRegisterChoice')
+  .addEventListener(
+    'click',
+    openCitizenRegistration
+  );
+
+document.getElementById('registerBackChoice')
+  .addEventListener(
+    'click',
+    closeCitizenRegistration
+  );
+
+document.getElementById('regPinToggle')
+  .addEventListener(
+    'click',
+    ()=>{
+      const input =
+        document.getElementById('regPin');
+
+      input.type =
+        input.type === 'password'
+          ? 'text'
+          : 'password';
+    }
+  );
+
+document.getElementById('regConfirmPinToggle')
+  .addEventListener(
+    'click',
+    ()=>{
+      const input =
+        document.getElementById(
+          'regConfirmPin'
+        );
+
+      input.type =
+        input.type === 'password'
+          ? 'text'
+          : 'password';
+    }
+  );
+
+document.getElementById('citizenRegisterForm')
+  .addEventListener(
+    'submit',
+    async e=>{
+
+      e.preventDefault();
+
+      const nik =
+        document.getElementById(
+          'regNik'
+        ).value.trim();
+
+      const fullName =
+        document.getElementById(
+          'regFullName'
+        ).value.trim();
+
+      const pin =
+        document.getElementById(
+          'regPin'
+        ).value.trim();
+
+      const confirmPin =
+        document.getElementById(
+          'regConfirmPin'
+        ).value.trim();
+
+      const status =
+        document.getElementById(
+          'registerStatus'
+        );
+
+      if(!/^\d{16}$/.test(nik)){
+        status.className =
+          'login-status error';
+
+        status.textContent =
+          'NIK harus terdiri dari 16 digit angka.';
+
+        return;
+      }
+
+      if(fullName.length < 3){
+        status.className =
+          'login-status error';
+
+        status.textContent =
+          'Nama lengkap wajib diisi.';
+
+        return;
+      }
+
+      if(!/^\d{6}$/.test(pin)){
+        status.className =
+          'login-status error';
+
+        status.textContent =
+          'PIN harus 6 digit angka.';
+
+        return;
+      }
+
+      if(pin !== confirmPin){
+        status.className =
+          'login-status error';
+
+        status.textContent =
+          'Konfirmasi PIN tidak sama.';
+
+        return;
+      }
+
+      await registerCitizen(
+        nik,
+        fullName,
+        pin,
+        confirmPin
+      );
+
+    }
+  );
+
+
 document.getElementById('deviceLoginChoice').addEventListener('click',()=>openLoginForm('DEVICE'));
 document.getElementById('citizenLoginChoice').addEventListener('click',()=>openLoginForm('CITIZEN'));
 document.getElementById('backToPublicBtn').addEventListener('click',closeLoginToPublic);
