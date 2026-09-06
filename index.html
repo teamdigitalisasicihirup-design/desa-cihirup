@@ -813,7 +813,7 @@ footer strong{color:var(--blue)}
 .service-admin-status.diajukan{background:#fff3d4;color:#a36c00}.service-admin-status.diproses{background:#e2f2ff;color:#0871ad}.service-admin-status.selesai{background:#e2f8ec;color:#137846}.service-admin-status.ditolak{background:#ffe5e5;color:#b53e3e}
 .service-admin-actions{display:flex;flex-wrap:wrap;gap:6px}.service-admin-action{border:0;border-radius:9px;padding:7px 9px;font-size:11px;font-weight:700;cursor:pointer}
 .service-admin-action.process{background:#e7f5ff;color:#0873b4}.service-admin-action.done{background:#e5f8ed;color:#137849}.service-admin-action.reject{background:#ffe9e9;color:#b33e3e}.service-admin-action.reopen{background:#fff3d9;color:#956400}.service-admin-action.note{background:#edf1f5;color:#536d80}
-.service-admin-empty,.service-admin-loading,.service-admin-error{padding:38px;text-align:center;color:#7c91a0}.service-admin-foot{display:flex;justify-content:space-between;gap:10px;margin-top:12px;color:#7c91a0;font-size:11px}.service-admin-note{max-width:230px;white-space:normal;line-height:1.45;color:#617b8d}
+.service-admin-empty,.service-admin-loading,.service-admin-error{padding:38px;text-align:center;color:#7c91a0}.service-admin-foot{display:flex;justify-content:space-between;gap:10px;margin-top:12px;color:#7c91a0;font-size:11px}.service-admin-note{max-width:230px;white-space:normal;line-height:1.45;color:#617b8d}.service-admin-action.pdf{background:#e8f6ef;color:#13764a}.service-admin-pdf{display:block;margin-top:5px;font-size:10px;color:#6f8796}
 @media(max-width:800px){.service-admin-summary{grid-template-columns:repeat(2,1fr)}.service-admin-head{padding:18px}.service-admin-body{padding:18px}.service-admin-toolbar{flex-wrap:wrap}.service-admin-search{flex-basis:100%}.service-admin-foot{flex-direction:column}}
 
 </style>
@@ -3523,8 +3523,11 @@ function renderServiceAdmin(){
    if(st==='DIAJUKAN'){actions+='<button class="service-admin-action process" data-sa="DIPROSES" data-id="'+escAttr(x.id)+'">▶ Proses</button>';actions+='<button class="service-admin-action reject" data-sa="DITOLAK" data-id="'+escAttr(x.id)+'">✕ Tolak</button>';}
    else if(st==='DIPROSES'){actions+='<button class="service-admin-action done" data-sa="SELESAI" data-id="'+escAttr(x.id)+'">✓ Selesai</button>';actions+='<button class="service-admin-action reject" data-sa="DITOLAK" data-id="'+escAttr(x.id)+'">✕ Tolak</button>';}
    else{actions+='<button class="service-admin-action reopen" data-sa="DIPROSES" data-id="'+escAttr(x.id)+'">↻ Proses Lagi</button>';}
+   if(x.pdfUrl){actions+='<button class="service-admin-action pdf" data-sa="PDF" data-id="'+escAttr(x.id)+'">🖨 PDF / Cetak</button>'; }
+   else if(st==='DIPROSES'||st==='SELESAI'){actions+='<button class="service-admin-action pdf" data-sa="MAKE_PDF" data-id="'+escAttr(x.id)+'">📄 Buat PDF</button>'; }
    actions+='<button class="service-admin-action note" data-sa="NOTE" data-id="'+escAttr(x.id)+'">✎ Catatan</button>';
-   return '<tr><td><div class="number">'+esc(x.number||'-')+'</div></td><td><div class="person"><strong>'+esc(x.name||'-')+'</strong><small>NIK: '+esc(x.nik||'-')+'</small><small>'+esc(x.userCode||'')+'</small></div></td><td>'+esc(x.serviceName||'-')+'</td><td><strong>'+esc(x.subject||'-')+'</strong><br><span style="color:#7890a0">'+esc(x.description||'')+'</span></td><td>'+serviceAdminStatusLabel(st)+'</td><td><div class="service-admin-note">'+esc(x.note||'—')+'</div></td><td>'+serviceAdminDate(x.createdAt)+'</td><td><div class="service-admin-actions">'+actions+'</div></td></tr>';
+   const pdfInfo=x.pdfName?'<span class="service-admin-pdf">✓ '+esc(x.pdfName)+'</span>':'';
+   return '<tr><td><div class="number">'+esc(x.number||'-')+'</div></td><td><div class="person"><strong>'+esc(x.name||'-')+'</strong><small>NIK: '+esc(x.nik||'-')+'</small><small>'+esc(x.userCode||'')+'</small></div></td><td>'+esc(x.serviceName||'-')+'</td><td><strong>'+esc(x.subject||'-')+'</strong><br><span style="color:#7890a0">'+esc(x.description||'')+'</span></td><td>'+serviceAdminStatusLabel(st)+'</td><td><div class="service-admin-note">'+esc(x.note||'—')+'</div></td><td>'+serviceAdminDate(x.createdAt)+pdfInfo+'</td><td><div class="service-admin-actions">'+actions+'</div></td></tr>';
  }).join('')+'</tbody></table>';
  wrap.querySelectorAll('[data-sa]').forEach(btn=>btn.addEventListener('click',()=>handleServiceAdminAction(btn.dataset.sa,btn.dataset.id)));
 }
@@ -3540,10 +3543,26 @@ async function loadServiceAdmin(){
 }
 async function updateServiceRequest(id,status,note){return await jsonp('update_service_request',{userId:currentUser.userCode,token:currentSession,requestId:id,status:status,note:note||''},15000);}
 async function handleServiceAdminAction(action,id){
- const item=serviceAdminData.find(x=>String(x.id)===String(id));if(!item)return;let status=action,note=item.note||'';
+ const item=serviceAdminData.find(x=>String(x.id)===String(id));if(!item)return;
+ if(action==='PDF'){if(item.pdfUrl){window.open(item.pdfUrl,'_blank');}else{toast('PDF Layanan','PDF belum tersedia.');}return;}
+ if(action==='MAKE_PDF'){
+   const popup=window.open('about:blank','_blank');
+   if(popup)popup.document.write('<p style="font-family:Arial;padding:30px">Sedang membuat PDF layanan...</p>');
+   try{
+     const r=await jsonp('generate_service_pdf',{userId:currentUser.userCode,token:currentSession,requestId:id},30000);
+     if(!r?.success)throw new Error(r?.message||'PDF gagal dibuat.');
+     if(popup)popup.location.href=r.data.url;else window.open(r.data.url,'_blank');
+     toast('PDF Layanan','PDF berhasil dibuat. Silakan print dan tanda tangani.');
+     await loadServiceAdmin();
+   }catch(e){if(popup)popup.close();toast('PDF Layanan',e.message||'PDF gagal dibuat.');}
+   return;
+ }
+ let status=action,note=item.note||'';
  if(action==='NOTE'){const next=prompt('Catatan admin untuk '+(item.number||'permohonan')+':',note);if(next===null)return;note=next.trim();status=String(item.status||'DIAJUKAN').toUpperCase();}
  else{const label={DIPROSES:'memproses',SELESAI:'menyelesaikan',DITOLAK:'menolak'}[status]||'mengubah status';if(!confirm('Yakin akan '+label+' permohonan '+(item.number||'-')+' milik '+(item.name||'-')+'?'))return;const entered=prompt('Catatan admin (opsional):',note);if(entered===null)return;note=entered.trim();}
- try{const r=await updateServiceRequest(id,status,note);if(!r?.success)throw new Error(r?.message||'Perubahan permohonan gagal.');toast('Administrasi Layanan',r.message||'Permohonan berhasil diperbarui.');await loadServiceAdmin();}catch(e){toast('Administrasi Layanan',e.message||'Perubahan permohonan gagal.');}
+ try{const r=await updateServiceRequest(id,status,note);if(!r?.success)throw new Error(r?.message||'Perubahan permohonan gagal.');toast('Administrasi Layanan',r.message||'Permohonan berhasil diperbarui.');await loadServiceAdmin();
+   if(r?.data?.pdf?.url){setTimeout(()=>window.open(r.data.pdf.url,'_blank'),250);}
+ }catch(e){toast('Administrasi Layanan',e.message||'Perubahan permohonan gagal.');}
 }
 async function openServiceAdmin(){
  const role=String(currentUser?.roleCode||'').toUpperCase();
