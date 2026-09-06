@@ -375,8 +375,8 @@ footer strong{color:var(--blue)}
   <div class="status">
     <div class="status-card">
       <div class="status-top"><span>PEMDES CIHIRUP</span><span class="online">ONLINE</span></div>
-      <h2>V1.0 API</h2>
-      <p id="apiStatusText">Terhubung ke backend Google Apps Script.</p>
+      <h2>V2.0 API</h2>
+      <p id="apiStatusText">Terhubung ke SIAP LANCAR API V2 • Google Apps Script.</p>
       <div class="bars"><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div>
     </div>
   </div>
@@ -661,7 +661,10 @@ async function loadDashboard(){
   if(!currentSession) return;
 
   try{
-    const result = await jsonp('dashboard',{token:currentSession},12000);
+    const result = await jsonp('dashboard',{
+      userId: currentUser?.userCode || '',
+      token: currentSession
+    },12000);
 
     if(!result || !result.success){
       if(result && result.code === 'TOKEN_INVALID'){
@@ -699,7 +702,10 @@ async function logout(){
   const token = currentSession;
 
   try{
-    if(token) await jsonp('logout',{token},8000);
+    if(token) await jsonp('logout',{
+        userId: currentUser?.userCode || '',
+        token: token
+      },8000);
   }catch(e){}
 
   clearSession();
