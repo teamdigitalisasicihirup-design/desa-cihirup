@@ -1049,7 +1049,7 @@ function renderComplaintAdmin(){
   );
 }
 
-async async function handleComplaintAdmin(action,id){
+async function handleComplaintAdmin(action,id){
   const item=complaintData.find(x=>String(x.id)===String(id));
   if(!item)return;
   let status=action,note=item.tanggapan||'',follow=item.tindakLanjut||'';
@@ -2171,7 +2171,7 @@ async function validateStoredSession(){
   if(!currentSession) return false;
 
   try{
-    const result = await jsonp('session',{token:currentSession},10000);
+    const result = await jsonp('session',{userId:(currentUser&&currentUser.userCode)||'',token:currentSession},10000);
     if(result && result.success && result.authenticated){
       currentUser = result.user || currentUser;
       if(currentUser) localStorage.setItem(USER_KEY,JSON.stringify(currentUser));
