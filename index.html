@@ -1567,6 +1567,76 @@ footer strong{color:var(--blue)}
   </div>
 </div>
 
+
+<style>
+/* =========================================================
+   PEMBANGUNAN DESA — V26
+   ========================================================= */
+.pembangunan-modal{position:fixed;inset:0;z-index:1250;display:grid;place-items:center;padding:18px;background:rgba(4,35,66,.58);backdrop-filter:blur(7px)}
+.pembangunan-card{width:min(1180px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:24px;box-shadow:0 24px 70px rgba(0,0,0,.25);border:1px solid #dbeaf4}
+.pembangunan-head{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:22px 24px;border-bottom:1px solid #e7f0f6;position:sticky;top:0;background:#fff;z-index:2}
+.pembangunan-title{display:flex;gap:13px;align-items:center}.pembangunan-icon{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:#eaf6ff;color:#14679b;font-size:23px;font-weight:900}.pembangunan-title h2{margin:0;color:#12344d;font-size:21px}.pembangunan-title p{margin:4px 0 0;color:#71879a;font-size:13px}.pembangunan-close{border:0;background:#eef5f9;width:38px;height:38px;border-radius:12px;font-size:24px;cursor:pointer;color:#456}
+.pembangunan-body{padding:20px 24px 24px}.pembangunan-summary{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}.pembangunan-stat{padding:14px;border:1px solid #dfeef7;border-radius:15px;background:#f8fcff}.pembangunan-stat span{display:block;font-size:11px;color:#71879a}.pembangunan-stat strong{display:block;font-size:23px;color:#164b70;margin-top:3px}.pembangunan-stat.progress strong{color:#9b6b00}.pembangunan-stat.done strong{color:#16824c}.pembangunan-toolbar{display:grid;grid-template-columns:1.6fr .8fr .9fr auto auto;gap:9px;margin-bottom:14px}.pembangunan-input,.pembangunan-select{height:42px;border:1px solid #cfe0eb;border-radius:11px;padding:0 12px;font:inherit;outline:none;background:#fff}.pembangunan-input:focus,.pembangunan-select:focus{border-color:#5ba8d2;box-shadow:0 0 0 3px rgba(91,168,210,.12)}.pembangunan-btn{height:42px;border:0;border-radius:11px;padding:0 14px;font-weight:800;cursor:pointer;background:#edf6fb;color:#225b7e}.pembangunan-btn.primary{background:#176b9e;color:#fff}.pembangunan-table-wrap{overflow:auto;border:1px solid #e0edf5;border-radius:14px}.pembangunan-table{width:100%;border-collapse:collapse;min-width:980px}.pembangunan-table th,.pembangunan-table td{padding:11px 10px;border-bottom:1px solid #e8f1f6;text-align:left;font-size:12px;vertical-align:top}.pembangunan-table th{background:#f4faff;color:#45657a;position:sticky;top:0}.pembangunan-table tr:hover td{background:#fbfdff}.pembangunan-badge{display:inline-flex;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:900;background:#eef6fb;color:#39657e}.pembangunan-badge.done{background:#e9f8ef;color:#177346}.pembangunan-badge.progress{background:#fff5d9;color:#8b6500}.pembangunan-badge.plan{background:#edf0ff;color:#4e5c9a}.pembangunan-badge.stop{background:#fff0ef;color:#a74c45}.pembangunan-foot{display:flex;justify-content:space-between;gap:10px;margin-top:12px;color:#738a9b;font-size:11px}.pembangunan-form-modal{position:fixed;inset:0;z-index:1300;display:grid;place-items:center;padding:18px;background:rgba(4,35,66,.65)}.pembangunan-form-card{width:min(820px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:22px;box-shadow:0 24px 70px rgba(0,0,0,.28)}.pembangunan-form-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid #e5eef4}.pembangunan-form-head h3{margin:0;color:#173d56}.pembangunan-form-body{padding:20px}.pembangunan-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.pembangunan-field{display:flex;flex-direction:column;gap:5px}.pembangunan-field.full{grid-column:1/-1}.pembangunan-field label{font-size:11px;font-weight:800;color:#4d687a}.pembangunan-field input,.pembangunan-field select,.pembangunan-field textarea{border:1px solid #cfdee8;border-radius:10px;padding:10px;font:inherit;outline:none}.pembangunan-field textarea{min-height:86px;resize:vertical}.pembangunan-form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.pembangunan-empty,.pembangunan-loading{padding:28px;text-align:center;color:#7890a0}.pembangunan-danger{color:#a84942!important}
+@media(max-width:800px){.pembangunan-summary{grid-template-columns:repeat(2,1fr)}.pembangunan-toolbar{grid-template-columns:1fr 1fr}.pembangunan-toolbar .wide{grid-column:1/-1}.pembangunan-grid{grid-template-columns:1fr}.pembangunan-field.full{grid-column:auto}.pembangunan-head,.pembangunan-body{padding-left:16px;padding-right:16px}.pembangunan-foot{flex-direction:column}}
+</style>
+
+
+<!-- PEMBANGUNAN DESA MODAL -->
+<div class="pembangunan-modal hidden" id="pembangunanModal" role="dialog" aria-modal="true" aria-labelledby="pembangunanTitle">
+  <div class="pembangunan-card">
+    <div class="pembangunan-head">
+      <div class="pembangunan-title"><div class="pembangunan-icon">⌂</div><div><h2 id="pembangunanTitle">Pembangunan Desa</h2><p>Perencanaan, kegiatan, anggaran, lokasi, dan progres pembangunan Desa Cihirup.</p></div></div>
+      <button class="pembangunan-close" id="pembangunanClose" type="button" aria-label="Tutup">×</button>
+    </div>
+    <div class="pembangunan-body">
+      <div class="pembangunan-summary">
+        <div class="pembangunan-stat"><span>Total Kegiatan</span><strong id="pembangunanTotal">0</strong></div>
+        <div class="pembangunan-stat"><span>Perencanaan</span><strong id="pembangunanPlan">0</strong></div>
+        <div class="pembangunan-stat progress"><span>Berjalan</span><strong id="pembangunanProgress">0</strong></div>
+        <div class="pembangunan-stat done"><span>Selesai</span><strong id="pembangunanDone">0</strong></div>
+        <div class="pembangunan-stat"><span>Total Anggaran</span><strong id="pembangunanBudget">Rp0</strong></div>
+      </div>
+      <div class="pembangunan-toolbar">
+        <input class="pembangunan-input wide" id="pembangunanSearch" type="search" placeholder="Cari kegiatan, lokasi, dusun, pelaksana...">
+        <select class="pembangunan-select" id="pembangunanYear"><option value="">Semua Tahun</option></select>
+        <select class="pembangunan-select" id="pembangunanStatus"><option value="">Semua Status</option><option value="PERENCANAAN">Perencanaan</option><option value="BERJALAN">Berjalan</option><option value="SELESAI">Selesai</option><option value="DITUNDA">Ditunda</option></select>
+        <button class="pembangunan-btn" id="pembangunanRefresh" type="button">↻ Segarkan</button>
+        <button class="pembangunan-btn primary" id="pembangunanAdd" type="button">＋ Kegiatan Baru</button>
+      </div>
+      <div class="pembangunan-table-wrap" id="pembangunanTableWrap"><div class="pembangunan-loading">⟳ Memuat data pembangunan...</div></div>
+      <div class="pembangunan-foot"><span id="pembangunanInfo">—</span><span>Akses pengelolaan: Super Admin • Kepala Desa • Sekretaris Desa • Kaur Perencanaan • Kaur Keuangan</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="pembangunan-form-modal hidden" id="pembangunanFormModal" role="dialog" aria-modal="true" aria-labelledby="pembangunanFormTitle">
+  <div class="pembangunan-form-card">
+    <div class="pembangunan-form-head"><h3 id="pembangunanFormTitle">Tambah Kegiatan Pembangunan</h3><button class="pembangunan-close" id="pembangunanFormClose" type="button">×</button></div>
+    <form class="pembangunan-form-body" id="pembangunanForm" autocomplete="off">
+      <input type="hidden" id="pembangunanId">
+      <div class="pembangunan-grid">
+        <div class="pembangunan-field"><label>Tahun *</label><input id="pembangunanTahun" type="number" min="2000" max="2100" required></div>
+        <div class="pembangunan-field"><label>Kode Kegiatan</label><input id="pembangunanKode" maxlength="40" placeholder="Contoh: PEM-2026-001"></div>
+        <div class="pembangunan-field full"><label>Nama Kegiatan *</label><input id="pembangunanNama" maxlength="180" required placeholder="Contoh: Pembangunan Jalan Lingkungan Dusun Kliwon"></div>
+        <div class="pembangunan-field"><label>Bidang</label><select id="pembangunanBidang"><option value="Pemerintahan">Pemerintahan</option><option value="Pembangunan">Pembangunan</option><option value="Pemberdayaan Masyarakat">Pemberdayaan Masyarakat</option><option value="Kesehatan">Kesehatan</option><option value="Pendidikan">Pendidikan</option><option value="Lingkungan">Lingkungan</option><option value="Lainnya">Lainnya</option></select></div>
+        <div class="pembangunan-field"><label>Sumber Dana</label><input id="pembangunanDana" maxlength="120" placeholder="DD / ADD / Banprov / Swadaya / lainnya"></div>
+        <div class="pembangunan-field"><label>Pagu Anggaran (Rp)</label><input id="pembangunanAnggaran" type="number" min="0" step="1" placeholder="0"></div>
+        <div class="pembangunan-field"><label>Dusun</label><select id="pembangunanDusun"><option value="">Pilih Dusun</option><option value="KLIWON">Kliwon</option><option value="MANIS">Manis</option><option value="WAGE">Wage</option></select></div>
+        <div class="pembangunan-field"><label>Lokasi</label><input id="pembangunanLokasi" maxlength="180" placeholder="RT/RW, jalan, fasilitas, atau titik lokasi"></div>
+        <div class="pembangunan-field"><label>Volume</label><input id="pembangunanVolume" maxlength="80" placeholder="Contoh: 250"></div>
+        <div class="pembangunan-field"><label>Satuan</label><input id="pembangunanSatuan" maxlength="40" placeholder="meter / unit / paket"></div>
+        <div class="pembangunan-field"><label>Progres (%)</label><input id="pembangunanProgres" type="number" min="0" max="100" step="1" value="0"></div>
+        <div class="pembangunan-field"><label>Status</label><select id="pembangunanStatusForm"><option value="PERENCANAAN">Perencanaan</option><option value="BERJALAN">Berjalan</option><option value="SELESAI">Selesai</option><option value="DITUNDA">Ditunda</option></select></div>
+        <div class="pembangunan-field"><label>Tanggal Mulai</label><input id="pembangunanMulai" type="date"></div>
+        <div class="pembangunan-field"><label>Tanggal Selesai</label><input id="pembangunanSelesai" type="date"></div>
+        <div class="pembangunan-field full"><label>Pelaksana</label><input id="pembangunanPelaksana" maxlength="180" placeholder="TPK / pihak pelaksana / swakelola"></div>
+        <div class="pembangunan-field full"><label>Keterangan</label><textarea id="pembangunanKeterangan" maxlength="1000" placeholder="Catatan, target, kendala, atau informasi tambahan."></textarea></div>
+      </div>
+      <div class="pembangunan-form-actions"><button class="pembangunan-btn" type="button" id="pembangunanCancel">Batal</button><button class="pembangunan-btn primary" type="submit" id="pembangunanSave">Simpan Kegiatan</button></div>
+    </form>
+  </div>
+</div>
+
 <!-- KEPENDUDUKAN MODAL -->
 <div class="population-modal hidden" id="populationModal" role="dialog" aria-modal="true" aria-labelledby="populationTitle">
   <div class="population-card">
@@ -2623,6 +2693,73 @@ async function startPopulationImport(){
   }
 }
 
+
+/* =========================================================
+   PEMBANGUNAN DESA — FRONTEND V26
+   ========================================================= */
+let pembangunanRows=[];
+let pembangunanEditingId='';
+const pembangunanAdminRoles=['SUPER_ADMIN','KEPALA_DESA','SEKRETARIS_DESA','KAUR_PERENCANAAN','KAUR_KEUANGAN'];
+
+function closePembangunan(){document.getElementById('pembangunanModal').classList.add('hidden');document.body.style.overflow='';}
+function closePembangunanForm(){document.getElementById('pembangunanFormModal').classList.add('hidden');}
+function showPembangunanForm(){document.getElementById('pembangunanFormModal').classList.remove('hidden');}
+function rupiah(n){return 'Rp'+Number(n||0).toLocaleString('id-ID');}
+function pembangunanStatusBadge(status){
+  const s=String(status||'').toUpperCase();
+  const cls=s==='SELESAI'?'done':s==='BERJALAN'?'progress':s==='DITUNDA'?'stop':'plan';
+  const label={PERENCANAAN:'Perencanaan',BERJALAN:'Berjalan',SELESAI:'Selesai',DITUNDA:'Ditunda'}[s]||s||'-';
+  return '<span class="pembangunan-badge '+cls+'">'+esc(label)+'</span>';
+}
+function pembangunanFormValue(id){return document.getElementById(id)?.value||'';}
+function resetPembangunanForm(){
+  pembangunanEditingId='';document.getElementById('pembangunanId').value='';
+  document.getElementById('pembangunanFormTitle').textContent='Tambah Kegiatan Pembangunan';
+  document.getElementById('pembangunanForm').reset();
+  document.getElementById('pembangunanTahun').value=new Date().getFullYear();
+  document.getElementById('pembangunanProgres').value=0;
+  document.getElementById('pembangunanStatusForm').value='PERENCANAAN';
+}
+function editPembangunan(id){
+  const r=pembangunanRows.find(x=>String(x.ID_PEMBANGUNAN||'')===String(id)); if(!r)return;
+  pembangunanEditingId=String(id); document.getElementById('pembangunanId').value=pembangunanEditingId;
+  document.getElementById('pembangunanFormTitle').textContent='Edit Kegiatan Pembangunan';
+  const map={pembangunanTahun:'TAHUN',pembangunanKode:'KODE_KEGIATAN',pembangunanNama:'NAMA_KEGIATAN',pembangunanBidang:'BIDANG',pembangunanDana:'SUMBER_DANA',pembangunanAnggaran:'PAGU_ANGGARAN',pembangunanDusun:'DUSUN',pembangunanLokasi:'LOKASI',pembangunanVolume:'VOLUME',pembangunanSatuan:'SATUAN',pembangunanProgres:'PROGRES',pembangunanStatusForm:'STATUS',pembangunanMulai:'TANGGAL_MULAI',pembangunanSelesai:'TANGGAL_SELESAI',pembangunanPelaksana:'PELAKSANA',pembangunanKeterangan:'KETERANGAN'};
+  Object.entries(map).forEach(([id,key])=>{const el=document.getElementById(id);if(el)el.value=r[key]??'';});
+  showPembangunanForm();
+}
+async function deletePembangunan(id){
+  if(!confirm('Hapus kegiatan pembangunan ini?'))return;
+  try{const r=await jsonp('pembangunan_delete',{userId:currentUser.userCode,token:currentSession,id:String(id)},15000);if(!r?.success)throw new Error(r?.message||'Gagal menghapus data.');toast('Pembangunan Desa',r.message||'Data berhasil dihapus.');await loadPembangunan();}catch(e){toast('Pembangunan Desa',e.message||'Gagal menghapus data.');}
+}
+function renderPembangunan(){
+  const wrap=document.getElementById('pembangunanTableWrap');const q=document.getElementById('pembangunanSearch').value.toLowerCase().trim();const y=document.getElementById('pembangunanYear').value;const st=document.getElementById('pembangunanStatus').value;
+  let rows=pembangunanRows.filter(r=>(!y||String(r.TAHUN)===String(y))&&(!st||String(r.STATUS||'').toUpperCase()===st));
+  if(q)rows=rows.filter(r=>Object.values(r).some(v=>String(v??'').toLowerCase().includes(q)));
+  if(!pembangunanRows.length){wrap.innerHTML='<div class="pembangunan-empty">Belum ada data kegiatan pembangunan. Klik <strong>＋ Kegiatan Baru</strong> untuk mulai mengisi.</div>';return;}
+  const total=pembangunanRows.length,plan=pembangunanRows.filter(r=>String(r.STATUS).toUpperCase()==='PERENCANAAN').length,prog=pembangunanRows.filter(r=>String(r.STATUS).toUpperCase()==='BERJALAN').length,done=pembangunanRows.filter(r=>String(r.STATUS).toUpperCase()==='SELESAI').length,budget=pembangunanRows.reduce((a,r)=>a+Number(r.PAGU_ANGGARAN||0),0);
+  document.getElementById('pembangunanTotal').textContent=total.toLocaleString('id-ID');document.getElementById('pembangunanPlan').textContent=plan.toLocaleString('id-ID');document.getElementById('pembangunanProgress').textContent=prog.toLocaleString('id-ID');document.getElementById('pembangunanDone').textContent=done.toLocaleString('id-ID');document.getElementById('pembangunanBudget').textContent=rupiah(budget);
+  const years=[...new Set(pembangunanRows.map(r=>String(r.TAHUN||'')).filter(Boolean))].sort((a,b)=>b.localeCompare(a));const ys=document.getElementById('pembangunanYear');const old=ys.value;ys.innerHTML='<option value="">Semua Tahun</option>'+years.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('');if(years.includes(old))ys.value=old;
+  const fmt=v=>v?String(v).slice(0,10):'-';
+  wrap.innerHTML='<table class="pembangunan-table"><thead><tr><th>Tahun</th><th>Kegiatan</th><th>Bidang</th><th>Lokasi</th><th>Anggaran</th><th>Progres</th><th>Status</th><th>Aksi</th></tr></thead><tbody>'+rows.map(r=>'<tr><td><strong>'+esc(r.TAHUN||'-')+'</strong><br><small>'+esc(r.KODE_KEGIATAN||'')+'</small></td><td><strong>'+esc(r.NAMA_KEGIATAN||'-')+'</strong><br><small>'+esc(r.PELAKSANA||'')+'</small></td><td>'+esc(r.BIDANG||'-')+'</td><td>'+esc(r.DUSUN||'-')+'<br><small>'+esc(r.LOKASI||'-')+'</small></td><td>'+rupiah(r.PAGU_ANGGARAN)+'</td><td><strong>'+Number(r.PROGRES||0)+'%</strong></td><td>'+pembangunanStatusBadge(r.STATUS)+'</td><td><button type="button" class="pembangunan-btn" onclick="editPembangunan(\''+esc(r.ID_PEMBANGUNAN)+'\')">Edit</button> <button type="button" class="pembangunan-btn pembangunan-danger" onclick="deletePembangunan(\''+esc(r.ID_PEMBANGUNAN)+'\')">Hapus</button></td></tr>').join('')+'</tbody></table>'+(rows.length?'':'<div class="pembangunan-empty">Tidak ada kegiatan yang sesuai filter.</div>');
+  document.getElementById('pembangunanInfo').textContent=rows.length+' kegiatan ditampilkan • Sinkronisasi '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+}
+async function loadPembangunan(){
+  const wrap=document.getElementById('pembangunanTableWrap');wrap.innerHTML='<div class="pembangunan-loading">⟳ Mengambil data pembangunan dari server...</div>';
+  try{const r=await jsonp('pembangunan_list',{userId:currentUser.userCode,token:currentSession},15000);if(!r?.success)throw new Error(r?.message||'Data pembangunan gagal dimuat.');pembangunanRows=Array.isArray(r.data)?r.data:[];renderPembangunan();}catch(e){wrap.innerHTML='<div class="pembangunan-empty">'+esc(e.message||'Gagal memuat data.')+'</div>';toast('Pembangunan Desa',e.message||'Gagal memuat data.');}
+}
+async function openPembangunan(){
+  const role=String(currentUser?.roleCode||'').toUpperCase();if(!currentSession||!currentUser){openLoginChooser('Silakan Login Perangkat untuk membuka Pembangunan Desa.');return;}if(role==='MASYARAKAT'){toast('Akses Ditolak','Pembangunan Desa hanya untuk perangkat desa.');return;}
+  document.getElementById('pembangunanModal').classList.remove('hidden');document.body.style.overflow='hidden';await loadPembangunan();
+}
+async function savePembangunan(e){
+  e.preventDefault();const role=String(currentUser?.roleCode||'').toUpperCase();if(!pembangunanAdminRoles.includes(role)){toast('Akses Ditolak','Anda tidak memiliki hak pengelolaan pembangunan.');return;}
+  const payload={userId:currentUser.userCode,token:currentSession,id:pembangunanEditingId,tahun:pembangunanFormValue('pembangunanTahun'),kode:pembangunanFormValue('pembangunanKode'),nama:pembangunanFormValue('pembangunanNama'),bidang:pembangunanFormValue('pembangunanBidang'),dana:pembangunanFormValue('pembangunanDana'),anggaran:pembangunanFormValue('pembangunanAnggaran'),dusun:pembangunanFormValue('pembangunanDusun'),lokasi:pembangunanFormValue('pembangunanLokasi'),volume:pembangunanFormValue('pembangunanVolume'),satuan:pembangunanFormValue('pembangunanSatuan'),progres:pembangunanFormValue('pembangunanProgres'),status:pembangunanFormValue('pembangunanStatusForm'),mulai:pembangunanFormValue('pembangunanMulai'),selesai:pembangunanFormValue('pembangunanSelesai'),pelaksana:pembangunanFormValue('pembangunanPelaksana'),keterangan:pembangunanFormValue('pembangunanKeterangan')};
+  if(!payload.tahun||!payload.nama){toast('Pembangunan Desa','Tahun dan Nama Kegiatan wajib diisi.');return;}
+  const btn=document.getElementById('pembangunanSave');btn.disabled=true;btn.textContent='Menyimpan...';
+  try{const r=await jsonp(pembangunanEditingId?'pembangunan_update':'pembangunan_add',payload,15000);if(!r?.success)throw new Error(r?.message||'Gagal menyimpan kegiatan.');toast('Pembangunan Desa',r.message||'Kegiatan berhasil disimpan.');closePembangunanForm();await loadPembangunan();}catch(e){toast('Pembangunan Desa',e.message||'Gagal menyimpan kegiatan.');}finally{btn.disabled=false;btn.textContent='Simpan Kegiatan';}
+}
+
 /* ---------- KEPENDUDUKAN ---------- */
 let populationData = [];
 let populationEditingId = '';
@@ -2964,6 +3101,11 @@ function openModule(name){
 
   if(name === 'Pemerintahan Desa'){
     openPemerintahanDesa();
+    return;
+  }
+
+  if(name === 'Pembangunan'){
+    openPembangunan();
     return;
   }
 
@@ -4657,6 +4799,18 @@ async function openServiceAdmin(){
  showServiceAdminModal();await loadServiceAdmin();
 }
 document.getElementById('serviceAdminClose').addEventListener('click',closeServiceAdmin);
+
+document.getElementById('pembangunanClose').addEventListener('click',closePembangunan);
+document.getElementById('pembangunanFormClose').addEventListener('click',closePembangunanForm);
+document.getElementById('pembangunanCancel').addEventListener('click',closePembangunanForm);
+document.getElementById('pembangunanRefresh').addEventListener('click',loadPembangunan);
+document.getElementById('pembangunanAdd').addEventListener('click',()=>{resetPembangunanForm();showPembangunanForm();});
+document.getElementById('pembangunanSearch').addEventListener('input',renderPembangunan);
+document.getElementById('pembangunanYear').addEventListener('change',renderPembangunan);
+document.getElementById('pembangunanStatus').addEventListener('change',renderPembangunan);
+document.getElementById('pembangunanForm').addEventListener('submit',savePembangunan);
+document.getElementById('pembangunanModal').addEventListener('click',e=>{if(e.target.id==='pembangunanModal')closePembangunan();});
+document.getElementById('pembangunanFormModal').addEventListener('click',e=>{if(e.target.id==='pembangunanFormModal')closePembangunanForm();});
 
 document.getElementById('populationClose').addEventListener('click',closePopulationModal);
 document.getElementById('populationFormClose').addEventListener('click',closePopulationForm);
