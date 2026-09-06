@@ -234,6 +234,80 @@ footer strong{color:var(--blue)}
   .stats{grid-template-columns:1fr 1fr;gap:8px}.modules{grid-template-columns:1fr}.stat{padding:14px}.stat h3{font-size:22px}
   footer{flex-direction:column}.login-card{padding:23px}
 }
+
+/* =========================================================
+   MODUL PERANGKAT DESA — LIVE DATA
+   ========================================================= */
+.data-modal{
+  position:fixed;inset:0;z-index:1000;display:grid;place-items:center;
+  padding:22px;background:rgba(4,35,66,.48);backdrop-filter:blur(5px);
+}
+.data-modal.hidden{display:none!important}
+.data-modal-card{
+  width:min(1120px,100%);max-height:min(86vh,820px);overflow:hidden;
+  background:#fff;border:1px solid var(--line);border-radius:24px;
+  box-shadow:0 30px 90px rgba(7,59,112,.28);display:flex;flex-direction:column;
+}
+.data-modal-head{
+  display:flex;align-items:center;justify-content:space-between;gap:15px;
+  padding:20px 22px;border-bottom:1px solid var(--line);
+  background:linear-gradient(135deg,#f7fcff,#fffdf5);
+}
+.data-modal-title{display:flex;align-items:center;gap:13px}
+.data-modal-icon{
+  width:46px;height:46px;border-radius:14px;display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--blue2),var(--navy));color:#fff;font-size:22px;
+}
+.data-modal-title h2{font-size:20px;color:var(--navy)}
+.data-modal-title p{font-size:11px;color:var(--muted);margin-top:3px}
+.data-modal-close{
+  width:40px;height:40px;border:1px solid var(--line);border-radius:12px;
+  background:#fff;color:var(--navy);font-size:22px;
+}
+.data-modal-close:hover{background:var(--blue3)}
+.data-toolbar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:13px 18px;border-bottom:1px solid var(--line);background:#fbfdff;
+}
+.data-count{font-size:11px;font-weight:900;color:var(--navy)}
+.data-search{
+  width:min(320px,55%);height:38px;border:1px solid var(--line);
+  border-radius:11px;padding:0 12px;outline:none;background:#fff;
+}
+.data-table-wrap{overflow:auto;padding:0}
+.data-table{width:100%;border-collapse:collapse;min-width:760px}
+.data-table th{
+  position:sticky;top:0;z-index:2;background:#eef8ff;color:var(--navy);
+  font-size:10px;text-transform:uppercase;letter-spacing:.35px;
+  padding:12px;border-bottom:1px solid var(--line);text-align:left;
+}
+.data-table td{
+  padding:11px 12px;border-bottom:1px solid #edf3f8;
+  font-size:11px;color:var(--ink);vertical-align:top;
+}
+.data-table tbody tr:hover{background:#f8fcff}
+.data-empty,.data-loading{
+  padding:40px 20px;text-align:center;color:var(--muted);font-size:12px;
+}
+.data-error{padding:28px 20px;text-align:center;color:var(--danger);font-size:12px}
+.data-modal-foot{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:12px 18px;border-top:1px solid var(--line);background:#fbfdff;
+}
+.data-note{font-size:10px;color:var(--muted)}
+.data-refresh{
+  border:0;border-radius:10px;padding:9px 13px;background:var(--blue);
+  color:#fff;font-size:11px;font-weight:900;
+}
+@media(max-width:700px){
+  .data-modal{padding:10px}
+  .data-modal-card{max-height:92vh;border-radius:18px}
+  .data-modal-head{padding:15px}
+  .data-modal-title h2{font-size:17px}
+  .data-toolbar{flex-wrap:wrap}
+  .data-search{width:100%;max-width:none}
+}
+
 </style>
 </head>
 
@@ -447,6 +521,36 @@ footer strong{color:var(--blue)}
 
 </section>
 </main>
+</div>
+
+
+<div class="data-modal hidden" id="perangkatModal" role="dialog" aria-modal="true" aria-labelledby="perangkatModalTitle">
+  <div class="data-modal-card">
+    <div class="data-modal-head">
+      <div class="data-modal-title">
+        <div class="data-modal-icon">♜</div>
+        <div>
+          <h2 id="perangkatModalTitle">Perangkat Desa</h2>
+          <p>Data langsung dari database CIHIRUP LINK</p>
+        </div>
+      </div>
+      <button class="data-modal-close" id="perangkatModalClose" type="button" aria-label="Tutup">×</button>
+    </div>
+
+    <div class="data-toolbar">
+      <span class="data-count" id="perangkatCount">Memuat data...</span>
+      <input class="data-search" id="perangkatSearch" type="search" placeholder="Cari nama, jabatan, kode, dusun...">
+    </div>
+
+    <div class="data-table-wrap" id="perangkatTableWrap">
+      <div class="data-loading">Memuat data Perangkat Desa...</div>
+    </div>
+
+    <div class="data-modal-foot">
+      <span class="data-note" id="perangkatNote">Sumber: PERANGKAT_DESA • Mode baca</span>
+      <button class="data-refresh" type="button" id="perangkatRefresh">↻ Segarkan</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"><strong id="toastTitle">SIAP LANCAR</strong><span id="toastText"></span></div>
@@ -715,8 +819,155 @@ async function logout(){
   toast('Logout','Sesi berhasil diakhiri.');
 }
 
+let perangkatRows = [];
+let perangkatHeaders = [];
+
 function openModule(name){
+  if(name === 'Perangkat Desa'){
+    openPerangkatDesa();
+    return;
+  }
   toast(name,'Modul "' + name + '" sudah masuk arsitektur SIAP LANCAR dan akan diaktifkan bertahap.');
+}
+
+function showPerangkatModal(){
+  document.getElementById('perangkatModal').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+}
+
+function closePerangkatModal(){
+  document.getElementById('perangkatModal').classList.add('hidden');
+  document.body.style.overflow='';
+}
+
+function normalizeRowsFromMaster(result){
+  /*
+    Backend V2 dapat mengembalikan data master dalam beberapa bentuk.
+    Fungsi ini menormalisasi semuanya menjadi {headers, rows}.
+  */
+  const root = result && result.data ? result.data : result;
+  let block = root;
+
+  if(root && root.PERANGKAT_DESA) block = root.PERANGKAT_DESA;
+  if(root && root.perangkatDesa) block = root.perangkatDesa;
+
+  if(Array.isArray(block)){
+    if(block.length === 0) return {headers:[],rows:[]};
+    if(Array.isArray(block[0])){
+      return {headers:block[0].map(x=>String(x??'')),rows:block.slice(1)};
+    }
+    if(typeof block[0] === 'object'){
+      const headers = [...new Set(block.flatMap(o=>Object.keys(o||{})))];
+      return {
+        headers,
+        rows:block.map(o=>headers.map(h=>o?.[h] ?? ''))
+      };
+    }
+  }
+
+  if(block && typeof block === 'object'){
+    const rows = block.rows || block.data || block.items || block.records;
+    const headers = block.headers || block.columns || block.fields;
+    if(Array.isArray(rows)){
+      if(Array.isArray(rows[0])){
+        return {headers:Array.isArray(headers)?headers:[],rows};
+      }
+      if(typeof rows[0] === 'object'){
+        const hs = Array.isArray(headers) && headers.length
+          ? headers
+          : [...new Set(rows.flatMap(o=>Object.keys(o||{})))];
+        return {headers:hs,rows:rows.map(o=>hs.map(h=>o?.[h] ?? ''))};
+      }
+    }
+  }
+
+  return {headers:[],rows:[]};
+}
+
+function renderPerangkatTable(){
+  const wrap = document.getElementById('perangkatTableWrap');
+  const count = document.getElementById('perangkatCount');
+  const q = document.getElementById('perangkatSearch').value.toLowerCase().trim();
+
+  let rows = perangkatRows;
+  if(q){
+    rows = rows.filter(row => row.some(v => String(v ?? '').toLowerCase().includes(q)));
+  }
+
+  count.textContent = q
+    ? rows.length.toLocaleString('id-ID') + ' data ditemukan'
+    : perangkatRows.length.toLocaleString('id-ID') + ' perangkat terdaftar';
+
+  if(!perangkatRows.length){
+    wrap.innerHTML = '<div class="data-empty">Belum ada data Perangkat Desa.</div>';
+    return;
+  }
+
+  const headers = perangkatHeaders.length
+    ? perangkatHeaders
+    : perangkatRows[0].map((_,i)=>'Kolom '+(i+1));
+
+  const thead = headers.map(h=>'<th>'+esc(h)+'</th>').join('');
+  const tbody = rows.map(row =>
+    '<tr>' + headers.map((_,i)=>'<td>'+esc(row[i] ?? '')+'</td>').join('') + '</tr>'
+  ).join('');
+
+  wrap.innerHTML =
+    '<table class="data-table"><thead><tr>'+thead+'</tr></thead>' +
+    '<tbody>'+(tbody || '<tr><td colspan="'+headers.length+'">Tidak ada data yang sesuai pencarian.</td></tr>')+
+    '</tbody></table>';
+}
+
+async function loadPerangkatDesa(){
+  const wrap = document.getElementById('perangkatTableWrap');
+  const count = document.getElementById('perangkatCount');
+
+  if(!currentSession || !currentUser?.userCode){
+    wrap.innerHTML='<div class="data-error">Sesi pengguna tidak tersedia. Silakan login kembali.</div>';
+    count.textContent='Sesi tidak aktif';
+    return;
+  }
+
+  wrap.innerHTML='<div class="data-loading">⟳ Mengambil data PERANGKAT_DESA dari server...</div>';
+  count.textContent='Memuat data...';
+
+  try{
+    const result = await jsonp('getmaster',{
+      userId: currentUser.userCode,
+      token: currentSession,
+      sheet: 'PERANGKAT_DESA'
+    },15000);
+
+    if(!result || !result.success){
+      if(result?.authenticated === false || result?.code === 'SESSION_INVALID'){
+        clearSession();
+        closePerangkatModal();
+        showLogin();
+        setLoginStatus('Sesi telah berakhir. Silakan login kembali.','error');
+        return;
+      }
+      throw new Error(result?.message || 'Data Perangkat Desa gagal dimuat.');
+    }
+
+    const normalized = normalizeRowsFromMaster(result);
+    perangkatHeaders = normalized.headers;
+    perangkatRows = normalized.rows;
+    renderPerangkatTable();
+
+    document.getElementById('perangkatNote').textContent =
+      'Sumber: PERANGKAT_DESA • Sinkronisasi berhasil • ' +
+      new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+  }catch(err){
+    console.error('Perangkat Desa:',err);
+    wrap.innerHTML='<div class="data-error">'+esc(err.message || 'Gagal mengambil data.')+'</div>';
+    count.textContent='Gagal memuat';
+    toast('Perangkat Desa',err.message || 'Gagal mengambil data.');
+  }
+}
+
+async function openPerangkatDesa(){
+  showPerangkatModal();
+  await loadPerangkatDesa();
 }
 
 /* ---------- EVENTS ---------- */
@@ -789,6 +1040,19 @@ document.getElementById('search').addEventListener('input',e=>{
 /* Ctrl+Enter / Enter PIN */
 document.getElementById('pin').addEventListener('keydown',e=>{
   if(e.key === 'Enter') document.getElementById('loginForm').requestSubmit();
+});
+
+
+document.getElementById('perangkatModalClose').addEventListener('click',closePerangkatModal);
+document.getElementById('perangkatRefresh').addEventListener('click',loadPerangkatDesa);
+document.getElementById('perangkatSearch').addEventListener('input',renderPerangkatTable);
+document.getElementById('perangkatModal').addEventListener('click',e=>{
+  if(e.target.id === 'perangkatModal') closePerangkatModal();
+});
+document.addEventListener('keydown',e=>{
+  if(e.key === 'Escape' && !document.getElementById('perangkatModal').classList.contains('hidden')){
+    closePerangkatModal();
+  }
 });
 
 /* ---------- STARTUP ---------- */
