@@ -814,29 +814,279 @@ footer strong{color:var(--blue)}
 /* ---------- PENGADUAN MASYARAKAT & ADMINISTRASI ---------- */
 let complaintData=[];
 const complaintAdminRoles=['SUPER_ADMIN','KEPALA_DESA','SEKRETARIS_DESA','KASI_PELAYANAN','KASI_PEMERINTAHAN','KASI_KESEJAHTERAAN'];
-function complaintIsAdmin(){return complaintAdminRoles.includes(String(currentUser?.roleCode||'').toUpperCase());}
-function showComplaintModal(){document.getElementById('complaintModal').classList.remove('hidden');document.body.style.overflow='hidden';}
-function closeComplaint(){document.getElementById('complaintModal').classList.add('hidden');document.body.style.overflow='';}
-function complaintStatus(s){s=String(s||'').toUpperCase();return '<span class="complaint-status '+s.toLowerCase()+'">'+esc(s||'-')+'</span>';}
-function complaintDate(v){if(!v)return '-';const d=new Date(v);return isNaN(d.getTime())?esc(String(v)):d.toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
-function fillComplaintCategories(cats){const a=document.getElementById('complaintKategori'),b=document.getElementById('complaintAdminKategori');const html='<option value="">Pilih kategori...</option>'+cats.map(x=>'<option value="'+escAttr(x)+'">'+esc(x)+'</option>').join('');a.innerHTML=html;b.innerHTML='<option value="">Semua Kategori</option>'+cats.map(x=>'<option value="'+escAttr(x)+'">'+esc(x)+'</option>').join('');}
+function complaintIsAdmin(){
+  return complaintAdminRoles.includes(String(currentUser?.roleCode||'').toUpperCase());
+}
+function showComplaintModal(){
+  document.getElementById('complaintModal').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+}
+function closeComplaint(){
+  document.getElementById('complaintModal').classList.add('hidden');
+  document.body.style.overflow='';
+}
+function complaintStatus(s){
+  s=String(s||'').toUpperCase();
+  const labels={DIAJUKAN:'Diajukan',DIVERIFIKASI:'Diverifikasi',DIPROSES:'Diproses',SELESAI:'Selesai',DITOLAK:'Ditolak'};
+  return '<span class="complaint-status '+s.toLowerCase()+'">'+esc(labels[s]||s||'-')+'</span>';
+}
+function complaintDate(v){
+  if(!v)return '-';
+  const d=new Date(v);
+  return isNaN(d.getTime())?esc(String(v)):d.toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+function escAttr(v){return esc(v).replace(/`/g,'&#096;');}
+
+function fillComplaintCategories(cats){
+  cats=Array.isArray(cats)?cats:[];
+  const a=document.getElementById('complaintKategori');
+  const b=document.getElementById('complaintAdminKategori');
+  const labels={
+    PELAYANAN_PUBLIK:'Pelayanan Publik',INFRASTRUKTUR:'Infrastruktur',
+    LINGKUNGAN:'Lingkungan',SOSIAL:'Sosial',KEAMANAN:'Keamanan',
+    KESEJAHTERAAN:'Kesejahteraan',PEMERINTAHAN:'Pemerintahan',LAINNYA:'Lainnya'
+  };
+  a.innerHTML='<option value="">Pilih kategori...</option>'+cats.map(x=>'<option value="'+escAttr(x)+'">'+esc(labels[x]||x)+'</option>').join('');
+  b.innerHTML='<option value="">Semua Kategori</option>'+cats.map(x=>'<option value="'+escAttr(x)+'">'+esc(labels[x]||x)+'</option>').join('');
+}
+
+function normalizeComplaintRow(x){
+  return {
+    id:x.ID_PENGADUAN||'',
+    number:x.NOMOR_PENGADUAN||'',
+    userCode:x.USER_CODE||'',
+    nik:x.NIK||'',
+    nama:x.NAMA||'',
+    kategori:x.KATEGORI||'',
+    judul:x.JUDUL||'',
+    isi:x.ISI_PENGADUAN||'',
+    lokasi:x.LOKASI||'',
+    lampiran:x.LAMPIRAN||'',
+    status:String(x.STATUS||'').toUpperCase(),
+    tanggal:x.TANGGAL_PENGADUAN||x.CREATED_AT||'',
+    selesai:x.TANGGAL_SELESAI||'',
+    petugas:x.PETUGAS||'',
+    tanggapan:x.TANGGAPAN||'',
+    tindakLanjut:x.TINDAK_LANJUT||'',
+    keterangan:x.KETERANGAN||'',
+    createdAt:x.CREATED_AT||'',
+    updatedAt:x.UPDATED_AT||''
+  };
+}
+
 async function openComplaint(){
- if(!currentUser){openLoginChooser('Silakan login untuk menggunakan Pengaduan Masyarakat.');return;}
- const role=String(currentUser.roleCode||'').toUpperCase();
- if(complaintAdminRoles.includes(role)){openComplaintAdmin();return;}
- if(role!=='MASYARAKAT'){toast('Akses Ditolak','Modul pengaduan hanya untuk masyarakat atau petugas pengelola pengaduan.');return;}
- showComplaintModal();document.getElementById('complaintCitizenArea').classList.remove('hidden');document.getElementById('complaintAdminArea').classList.add('hidden');document.getElementById('complaintTitle').textContent='Pengaduan Masyarakat';document.getElementById('complaintSubtitle').textContent='Sampaikan laporan, keluhan, aspirasi, atau saran kepada Pemerintah Desa Cihirup.';await loadComplaintCitizen();
+  if(!currentUser){
+    openLoginChooser('Silakan login untuk menggunakan Pengaduan Masyarakat.');
+    return;
+  }
+  const role=String(currentUser.roleCode||'').toUpperCase();
+  if(complaintAdminRoles.includes(role)){
+    await openComplaintAdmin();
+    return;
+  }
+  if(role!=='MASYARAKAT'){
+    toast('Akses Ditolak','Modul pengaduan hanya untuk masyarakat atau petugas pengelola pengaduan.');
+    return;
+  }
+  showComplaintModal();
+  document.getElementById('complaintCitizenArea').classList.remove('hidden');
+  document.getElementById('complaintAdminArea').classList.add('hidden');
+  document.getElementById('complaintTitle').textContent='Pengaduan Masyarakat';
+  document.getElementById('complaintSubtitle').textContent='Sampaikan laporan, keluhan, aspirasi, atau saran kepada Pemerintah Desa Cihirup.';
+  await loadComplaintCitizen();
 }
+
 async function loadComplaintCitizen(){
- const wrap=document.getElementById('complaintCitizenWrap');wrap.innerHTML='<div class="complaint-loading">⟳ Mengambil pengaduan Anda...</div>';
- try{const r=await jsonp('pengaduan_saya',{userId:currentUser.userCode,token:currentSession},15000);if(!r?.success)throw new Error(r?.message||'Pengaduan gagal dimuat.');complaintData=Array.isArray(r.data)?r.data:[];const s=r.summary||{};document.getElementById('complaintTotal').textContent=s.total??0;document.getElementById('complaintPending').textContent=s.diajukan??0;document.getElementById('complaintProcess').textContent=s.diproses??0;document.getElementById('complaintDone').textContent=s.selesai??0;fillComplaintCategories(r.kategori||[]);renderComplaintCitizen();}catch(e){wrap.innerHTML='<div class="complaint-error">'+esc(e.message||'Gagal memuat pengaduan.')+'</div>';toast('Pengaduan',e.message||'Gagal memuat data.');}
+  const wrap=document.getElementById('complaintCitizenWrap');
+  wrap.innerHTML='<div class="complaint-loading">⟳ Mengambil pengaduan Anda...</div>';
+  try{
+    const r=await jsonp('pengaduan_list',{userId:currentUser.userCode,token:currentSession},15000);
+    if(!r?.ok){
+      if(r?.message) throw new Error(r.message);
+      throw new Error('Pengaduan gagal dimuat.');
+    }
+    complaintData=(Array.isArray(r.data)?r.data:[]).map(normalizeComplaintRow);
+    const counts={total:complaintData.length,diajukan:0,diproses:0,selesai:0};
+    complaintData.forEach(x=>{
+      if(x.status==='DIAJUKAN'||x.status==='DIVERIFIKASI') counts.diajukan++;
+      if(x.status==='DIPROSES') counts.diproses++;
+      if(x.status==='SELESAI') counts.selesai++;
+    });
+    document.getElementById('complaintTotal').textContent=counts.total;
+    document.getElementById('complaintPending').textContent=counts.diajukan;
+    document.getElementById('complaintProcess').textContent=counts.diproses;
+    document.getElementById('complaintDone').textContent=counts.selesai;
+    fillComplaintCategories(r.meta?.categories||[]);
+    renderComplaintCitizen();
+  }catch(e){
+    wrap.innerHTML='<div class="complaint-error">'+esc(e.message||'Gagal memuat pengaduan.')+'</div>';
+    toast('Pengaduan',e.message||'Gagal memuat data.');
+  }
 }
-function renderComplaintCitizen(){const wrap=document.getElementById('complaintCitizenWrap');if(!complaintData.length){wrap.innerHTML='<div class="complaint-empty">Belum ada pengaduan. Silakan sampaikan pengaduan melalui formulir di sebelah kiri.</div>';return;}wrap.innerHTML=complaintData.map(x=>'<div class="complaint-item"><div class="complaint-item-top"><div><div class="complaint-number">'+esc(x.number||'-')+'</div><strong>'+esc(x.judul||'-')+'</strong></div>'+complaintStatus(x.status)+'</div><div class="complaint-meta"><span class="complaint-pill">'+esc(x.kategori||'-')+'</span><span class="complaint-pill">📍 '+esc(x.lokasi||'-')+'</span><span class="complaint-pill">'+complaintDate(x.createdAt)+'</span></div><div class="complaint-detail-text">'+esc(x.isi||'')+'</div>'+(x.tanggapan||x.tindakLanjut?'<div class="complaint-response"><b>Tanggapan Pemdes:</b> '+esc(x.tanggapan||'—')+'<br><b>Tindak lanjut:</b> '+esc(x.tindakLanjut||'—')+'</div>':'')+'</div>').join('');}
-async function submitComplaint(e){e.preventDefault();const btn=document.getElementById('complaintSubmitBtn');const data={kategori:document.getElementById('complaintKategori').value,judul:document.getElementById('complaintJudul').value.trim(),isi:document.getElementById('complaintIsi').value.trim(),lokasi:document.getElementById('complaintLokasi').value.trim(),keterangan:document.getElementById('complaintKeterangan').value.trim()};if(!data.kategori||data.judul.length<3||data.isi.length<10||data.lokasi.length<3){toast('Pengaduan','Lengkapi kategori, judul, isi, dan lokasi kejadian.');return;}btn.disabled=true;btn.textContent='⏳ Mengirim...';try{const r=await jsonp('submit_pengaduan',{userId:currentUser.userCode,token:currentSession,...data},20000);if(!r?.success)throw new Error(r?.message||'Pengaduan gagal dikirim.');document.getElementById('complaintForm').reset();toast('Pengaduan Berhasil','Nomor pengaduan Anda: '+(r.data?.number||'-'));await loadComplaintCitizen();}catch(e2){toast('Pengaduan',e2.message||'Pengaduan gagal dikirim.');}finally{btn.disabled=false;btn.textContent='📨 Kirim Pengaduan';}}
-async function openComplaintAdmin(){showComplaintModal();document.getElementById('complaintCitizenArea').classList.add('hidden');document.getElementById('complaintAdminArea').classList.remove('hidden');document.getElementById('complaintTitle').textContent='Administrasi Pengaduan';document.getElementById('complaintSubtitle').textContent='Verifikasi, proses, tindak lanjut, dan penyelesaian pengaduan masyarakat.';await loadComplaintAdmin();}
-async function loadComplaintAdmin(){const wrap=document.getElementById('complaintAdminWrap');wrap.innerHTML='<div class="complaint-loading">⟳ Mengambil data pengaduan...</div>';try{const r=await jsonp('pengaduan_list',{userId:currentUser.userCode,token:currentSession,status:document.getElementById('complaintAdminStatus').value,kategori:document.getElementById('complaintAdminKategori').value,q:document.getElementById('complaintAdminSearch').value.trim()},15000);if(!r?.success){if(r?.code==='SESSION_INVALID'){clearSession();closeComplaint();showLogin();return;}throw new Error(r?.message||'Administrasi pengaduan gagal dimuat.');}complaintData=Array.isArray(r.data)?r.data:[];const s=r.summary||{};document.getElementById('complaintTotal').textContent=s.total??0;document.getElementById('complaintPending').textContent=(s.diajukan??0)+(s.diverifikasi??0);document.getElementById('complaintProcess').textContent=s.diproses??0;document.getElementById('complaintDone').textContent=s.selesai??0;fillComplaintCategories(r.kategori||[]);renderComplaintAdmin();document.getElementById('complaintAdminInfo').textContent=complaintData.length+' pengaduan ditampilkan • diperbarui '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});}catch(e){wrap.innerHTML='<div class="complaint-error">'+esc(e.message||'Gagal memuat administrasi pengaduan.')+'</div>';toast('Administrasi Pengaduan',e.message||'Gagal memuat data.');}}
-function renderComplaintAdmin(){const wrap=document.getElementById('complaintAdminWrap');if(!complaintData.length){wrap.innerHTML='<div class="complaint-empty">Tidak ada pengaduan sesuai filter.</div>';return;}wrap.innerHTML='<table class="complaint-admin-table"><thead><tr><th>Nomor / Tanggal</th><th>Pemohon</th><th>Pengaduan</th><th>Status</th><th>Tindak Lanjut</th><th>Aksi</th></tr></thead><tbody>'+complaintData.map(x=>{const st=String(x.status||'').toUpperCase();let actions='';if(st==='DIAJUKAN')actions+='<button class="complaint-action verify" data-ca="DIVERIFIKASI" data-id="'+escAttr(x.id)+'">✓ Verifikasi</button>';if(st==='DIVERIFIKASI')actions+='<button class="complaint-action process" data-ca="DIPROSES" data-id="'+escAttr(x.id)+'">▶ Proses</button>';if(st==='DIPROSES')actions+='<button class="complaint-action done" data-ca="SELESAI" data-id="'+escAttr(x.id)+'">✓ Selesai</button>';if(st!=='SELESAI')actions+='<button class="complaint-action reject" data-ca="DITOLAK" data-id="'+escAttr(x.id)+'">✕ Tolak</button>';if(st==='SELESAI'||st==='DITOLAK')actions+='<button class="complaint-action process" data-ca="DIPROSES" data-id="'+escAttr(x.id)+'">↻ Proses Lagi</button>';actions+='<button class="complaint-action" data-ca="NOTE" data-id="'+escAttr(x.id)+'">✎ Tanggapan</button>';return '<tr><td><b class="complaint-number">'+esc(x.number||'-')+'</b><div class="complaint-inline">'+complaintDate(x.createdAt)+'</div></td><td><b>'+esc(x.name||'-')+'</b><div class="complaint-inline">NIK: '+esc(x.nik||'-')+'<br>'+esc(x.userCode||'')+'</div></td><td><b>'+esc(x.judul||'-')+'</b><div class="complaint-meta"><span class="complaint-pill">'+esc(x.kategori||'-')+'</span><span class="complaint-pill">📍 '+esc(x.lokasi||'-')+'</span></div><div class="complaint-detail-text">'+esc(x.isi||'')+'</div></td><td>'+complaintStatus(st)+'</td><td><div class="complaint-admin-note">'+esc(x.tanggapan||'—')+'<br><br><b>Tindak lanjut:</b><br>'+esc(x.tindakLanjut||'—')+'</div></td><td><div class="complaint-actions">'+actions+'</div></td></tr>';}).join('')+'</tbody></table>';wrap.querySelectorAll('[data-ca]').forEach(b=>b.addEventListener('click',()=>handleComplaintAdmin(b.dataset.ca,b.dataset.id)));}
-async function handleComplaintAdmin(action,id){const item=complaintData.find(x=>String(x.id)===String(id));if(!item)return;let status=action,note=item.tanggapan||'',follow=item.tindakLanjut||'';if(action==='NOTE'){note=prompt('Tanggapan untuk '+item.number+':',note)||'';follow=prompt('Tindak lanjut:',follow)||'';status=item.status;}else{if(action==='DITOLAK'){note=prompt('Alasan penolakan:',note)||'';if(!note.trim()){toast('Pengaduan','Alasan penolakan wajib diisi.');return;}}else if(!confirm('Ubah status '+item.number+' menjadi '+action+'?'))return;if(action==='SELESAI'&&!follow)follow=prompt('Tuliskan tindak lanjut/hasil penyelesaian:',follow)||'';}try{const r=await jsonp('update_pengaduan',{userId:currentUser.userCode,token:currentSession,idPengaduan:id,status:status,tanggapan:note,tindakLanjut:follow},20000);if(!r?.success)throw new Error(r?.message||'Pengaduan gagal diperbarui.');toast('Administrasi Pengaduan',r.message||'Pengaduan berhasil diperbarui.');await loadComplaintAdmin();}catch(e){toast('Administrasi Pengaduan',e.message||'Gagal memperbarui pengaduan.');}}
+
+function renderComplaintCitizen(){
+  const wrap=document.getElementById('complaintCitizenWrap');
+  if(!complaintData.length){
+    wrap.innerHTML='<div class="complaint-empty">Belum ada pengaduan. Silakan sampaikan pengaduan melalui formulir di sebelah kiri.</div>';
+    return;
+  }
+  wrap.innerHTML=complaintData.map(x=>(
+    '<div class="complaint-item">'+
+      '<div class="complaint-item-top"><b>'+esc(x.number||'-')+'</b>'+complaintStatus(x.status)+'</div>'+
+      '<h4>'+esc(x.judul||'-')+'</h4>'+
+      '<div class="complaint-meta">'+esc(x.kategori||'-')+' • 📍 '+esc(x.lokasi||'-')+' • '+complaintDate(x.tanggal)+'</div>'+
+      '<div class="complaint-detail-text">'+esc(x.isi||'')+'</div>'+
+      ((x.tanggapan||x.tindakLanjut)?'<div class="complaint-response"><b>Tanggapan Pemdes:</b> '+esc(x.tanggapan||'—')+'<br><b>Tindak lanjut:</b> '+esc(x.tindakLanjut||'—')+'</div>':'')+
+    '</div>'
+  )).join('');
+}
+
+async function submitComplaint(e){
+  e.preventDefault();
+  if(!currentUser){toast('Pengaduan','Silakan login terlebih dahulu.');return;}
+  const btn=document.getElementById('complaintSubmitBtn');
+  const data={
+    kategori:document.getElementById('complaintKategori').value,
+    judul:document.getElementById('complaintJudul').value.trim(),
+    isi:document.getElementById('complaintIsi').value.trim(),
+    lokasi:document.getElementById('complaintLokasi').value.trim(),
+    keterangan:document.getElementById('complaintKeterangan').value.trim()
+  };
+  if(!data.kategori||data.judul.length<3||data.isi.length<10||data.lokasi.length<3){
+    toast('Pengaduan','Lengkapi kategori, judul, isi, dan lokasi kejadian.');
+    return;
+  }
+  btn.disabled=true;btn.textContent='⏳ Mengirim...';
+  try{
+    const r=await jsonp('pengaduan_add',{
+      userId:currentUser.userCode,token:currentSession,...data
+    },20000);
+    if(!r?.ok) throw new Error(r?.message||'Pengaduan gagal dikirim.');
+    document.getElementById('complaintForm').reset();
+    toast('Pengaduan Berhasil','Nomor pengaduan Anda: '+(r.data?.NOMOR_PENGADUAN||'-'));
+    await loadComplaintCitizen();
+  }catch(e2){
+    toast('Pengaduan',e2.message||'Pengaduan gagal dikirim.');
+  }finally{
+    btn.disabled=false;btn.textContent='📨 Kirim Pengaduan';
+  }
+}
+
+async function openComplaintAdmin(){
+  showComplaintModal();
+  document.getElementById('complaintCitizenArea').classList.add('hidden');
+  document.getElementById('complaintAdminArea').classList.remove('hidden');
+  document.getElementById('complaintTitle').textContent='Administrasi Pengaduan';
+  document.getElementById('complaintSubtitle').textContent='Verifikasi, proses, tindak lanjut, dan penyelesaian pengaduan masyarakat.';
+  await loadComplaintAdmin();
+}
+
+async function loadComplaintAdmin(){
+  const wrap=document.getElementById('complaintAdminWrap');
+  wrap.innerHTML='<div class="complaint-loading">⟳ Mengambil data pengaduan...</div>';
+  try{
+    const r=await jsonp('pengaduan_list',{
+      userId:currentUser.userCode,
+      token:currentSession,
+      status:document.getElementById('complaintAdminStatus').value,
+      kategori:document.getElementById('complaintAdminKategori').value,
+      q:document.getElementById('complaintAdminSearch').value.trim()
+    },15000);
+    if(!r?.ok) throw new Error(r?.message||'Administrasi pengaduan gagal dimuat.');
+    complaintData=(Array.isArray(r.data)?r.data:[]).map(normalizeComplaintRow);
+    const all=complaintData;
+    const counts={total:all.length,diajukan:0,diproses:0,selesai:0};
+    all.forEach(x=>{
+      if(x.status==='DIAJUKAN'||x.status==='DIVERIFIKASI') counts.diajukan++;
+      if(x.status==='DIPROSES') counts.diproses++;
+      if(x.status==='SELESAI') counts.selesai++;
+    });
+    document.getElementById('complaintTotal').textContent=counts.total;
+    document.getElementById('complaintPending').textContent=counts.diajukan;
+    document.getElementById('complaintProcess').textContent=counts.diproses;
+    document.getElementById('complaintDone').textContent=counts.selesai;
+    fillComplaintCategories(r.meta?.categories||[]);
+    renderComplaintAdmin();
+    document.getElementById('complaintAdminInfo').textContent=
+      complaintData.length+' pengaduan ditampilkan • diperbarui '+
+      new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){
+    wrap.innerHTML='<div class="complaint-error">'+esc(e.message||'Gagal memuat administrasi pengaduan.')+'</div>';
+    toast('Administrasi Pengaduan',e.message||'Gagal memuat data.');
+  }
+}
+
+function renderComplaintAdmin(){
+  const wrap=document.getElementById('complaintAdminWrap');
+  if(!complaintData.length){
+    wrap.innerHTML='<div class="complaint-empty">Tidak ada pengaduan sesuai filter.</div>';
+    return;
+  }
+  wrap.innerHTML='<table class="complaint-admin-table"><thead><tr>'+
+    '<th>Nomor / Tanggal</th><th>Pemohon</th><th>Pengaduan</th><th>Status</th><th>Tindak Lanjut</th><th>Aksi</th>'+
+    '</tr></thead><tbody>'+
+    complaintData.map(x=>{
+      const st=x.status;
+      let actions='';
+      if(st==='DIAJUKAN') actions+='<button class="complaint-action verify" data-ca="DIVERIFIKASI" data-id="'+escAttr(x.id)+'">✓ Verifikasi</button>';
+      if(st==='DIVERIFIKASI') actions+='<button class="complaint-action process" data-ca="DIPROSES" data-id="'+escAttr(x.id)+'">▶ Proses</button>';
+      if(st==='DIPROSES') actions+='<button class="complaint-action done" data-ca="SELESAI" data-id="'+escAttr(x.id)+'">✓ Selesai</button>';
+      if(st!=='SELESAI') actions+='<button class="complaint-action reject" data-ca="DITOLAK" data-id="'+escAttr(x.id)+'">✕ Tolak</button>';
+      if(st==='SELESAI'||st==='DITOLAK') actions+='<button class="complaint-action process" data-ca="DIPROSES" data-id="'+escAttr(x.id)+'">↻ Proses Lagi</button>';
+      actions+='<button class="complaint-action" data-ca="NOTE" data-id="'+escAttr(x.id)+'">✎ Tanggapan</button>';
+      return '<tr>'+
+        '<td><b class="complaint-number">'+esc(x.number||'-')+'</b><div class="complaint-inline">'+complaintDate(x.tanggal)+'</div></td>'+
+        '<td><b>'+esc(x.nama||'-')+'</b><div class="complaint-inline">NIK: '+esc(x.nik||'-')+'<br>'+esc(x.userCode||'')+'</div></td>'+
+        '<td><b>'+esc(x.judul||'-')+'</b><div class="complaint-meta"><span class="complaint-pill">'+esc(x.kategori||'-')+'</span><span class="complaint-pill">📍 '+esc(x.lokasi||'-')+'</span></div><div class="complaint-detail-text">'+esc(x.isi||'')+'</div></td>'+
+        '<td>'+complaintStatus(st)+'</td>'+
+        '<td><div class="complaint-admin-note">'+esc(x.tanggapan||'—')+'<br><br><b>Tindak lanjut:</b><br>'+esc(x.tindakLanjut||'—')+'</div></td>'+
+        '<td><div class="complaint-actions">'+actions+'</div></td>'+
+      '</tr>';
+    }).join('')+
+    '</tbody></table>';
+  wrap.querySelectorAll('[data-ca]').forEach(b=>
+    b.addEventListener('click',()=>handleComplaintAdmin(b.dataset.ca,b.dataset.id))
+  );
+}
+
+async function handleComplaintAdmin(action,id){
+  const item=complaintData.find(x=>String(x.id)===String(id));
+  if(!item)return;
+  let status=action,note=item.tanggapan||'',follow=item.tindakLanjut||'';
+  if(action==='NOTE'){
+    note=prompt('Tanggapan untuk '+item.number+':',note)||'';
+    follow=prompt('Tindak lanjut:',follow)||'';
+    status=item.status;
+  }else{
+    if(action==='DITOLAK'){
+      note=prompt('Alasan penolakan:',note)||'';
+      if(!note.trim()){toast('Pengaduan','Alasan penolakan wajib diisi.');return;}
+    }else{
+      if(!confirm('Ubah status '+item.number+' menjadi '+action+'?'))return;
+      if(action==='SELESAI'&&!follow)
+        follow=prompt('Tuliskan tindak lanjut/hasil penyelesaian:',follow)||'';
+    }
+  }
+  try{
+    let r;
+    if(action==='NOTE'){
+      r=await jsonp('pengaduan_update',{
+        userId:currentUser.userCode,token:currentSession,
+        id:item.id,tanggapan:note,tindak_lanjut:follow
+      },20000);
+    }else{
+      r=await jsonp('pengaduan_status',{
+        userId:currentUser.userCode,token:currentSession,
+        id:item.id,status:status,tanggapan:note,tindak_lanjut:follow
+      },20000);
+    }
+    if(!r?.ok) throw new Error(r?.message||'Pengaduan gagal diperbarui.');
+    toast('Administrasi Pengaduan',r.message||'Pengaduan berhasil diperbarui.');
+    await loadComplaintAdmin();
+  }catch(e){
+    toast('Administrasi Pengaduan',e.message||'Gagal memperbarui pengaduan.');
+  }
+}
 
 /* ---------- ADMINISTRASI LAYANAN ---------- */
 .service-admin-modal{position:fixed;inset:0;z-index:1000;background:rgba(7,31,54,.58);display:flex;align-items:center;justify-content:center;padding:22px;backdrop-filter:blur(5px)}
