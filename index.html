@@ -780,6 +780,11 @@ footer strong{color:var(--blue)}
   line-height:1.55;
 }
 
+
+/* ===== MANAJEMEN AKUN MASYARAKAT ===== */
+.citizen-admin-modal{position:fixed;inset:0;z-index:1200;background:rgba(10,35,58,.58);display:flex;align-items:center;justify-content:center;padding:18px}
+.citizen-admin-modal.hidden{display:none!important}.citizen-admin-card{width:min(1180px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:24px;box-shadow:0 24px 70px rgba(12,44,72,.28)}
+.citizen-admin-head{display:flex;justify-content:space-between;align-items:center;padding:20px 22px;border-bottom:1px solid #e5edf5;position:sticky;top:0;background:#fff;z-index:2}.citizen-admin-title{display:flex;gap:13px;align-items:center}.citizen-admin-icon{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:#eaf6ff;color:#0878c9;font-size:22px;font-weight:800}.citizen-admin-title h2{margin:0;color:#123b5d;font-size:21px}.citizen-admin-title p{margin:3px 0 0;color:#6a8194;font-size:12px}.citizen-admin-close{border:0;background:#f2f6f9;width:40px;height:40px;border-radius:12px;font-size:25px;color:#527086;cursor:pointer}.citizen-admin-body{padding:20px 22px 24px}.citizen-admin-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}.citizen-summary-box{border:1px solid #e2edf5;border-radius:16px;padding:13px 15px;background:#fbfdff}.citizen-summary-box span{display:block;color:#6d8293;font-size:11px}.citizen-summary-box strong{display:block;color:#123b5d;font-size:25px;margin-top:4px}.citizen-summary-box.pending{background:#fffaf0;border-color:#f4dfae}.citizen-summary-box.active{background:#f0fbf5;border-color:#ccebd9}.citizen-summary-box.inactive{background:#fff4f4;border-color:#f0d1d1}.citizen-admin-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.citizen-admin-search{flex:1;min-width:220px;border:1px solid #d9e6ef;border-radius:13px;padding:11px 13px;font:inherit;outline:none}.citizen-admin-select{border:1px solid #d9e6ef;border-radius:13px;padding:11px 13px;background:#fff;color:#234b67;font:inherit}.citizen-admin-refresh{border:0;border-radius:13px;padding:11px 15px;background:#0878c9;color:#fff;font-weight:700;cursor:pointer}.citizen-admin-table-wrap{border:1px solid #e2ebf2;border-radius:16px;overflow:auto}.citizen-admin-table{width:100%;border-collapse:collapse;min-width:900px;font-size:12px}.citizen-admin-table th,.citizen-admin-table td{padding:11px 12px;border-bottom:1px solid #e9f0f5;text-align:left;vertical-align:middle}.citizen-admin-table th{background:#f4f9fc;color:#527086;font-size:11px;position:sticky;top:0}.citizen-admin-table tr:last-child td{border-bottom:0}.citizen-admin-table tr:hover td{background:#fbfdff}.citizen-status{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:800;white-space:nowrap}.citizen-status.pending{background:#fff0c9;color:#9a6800}.citizen-status.active{background:#dff6e9;color:#137043}.citizen-status.inactive{background:#ffe0e0;color:#a13d3d}.citizen-actions{display:flex;gap:6px;flex-wrap:wrap}.citizen-action{border:0;border-radius:9px;padding:7px 9px;font-size:10px;font-weight:700;cursor:pointer;background:#edf6fc;color:#0869a9}.citizen-action.approve{background:#e2f7ea;color:#147242}.citizen-action.danger{background:#ffe9e9;color:#a33e3e}.citizen-action.neutral{background:#f0f3f6;color:#566d7d}.citizen-empty,.citizen-loading,.citizen-error{padding:35px;text-align:center;color:#708697}.citizen-error{color:#a34242}.citizen-admin-foot{margin-top:12px;color:#718696;font-size:11px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}@media(max-width:760px){.citizen-admin-modal{padding:8px}.citizen-admin-card{border-radius:18px;max-height:96vh}.citizen-admin-head{padding:15px}.citizen-admin-body{padding:15px}.citizen-admin-summary{grid-template-columns:repeat(2,1fr)}.citizen-admin-title h2{font-size:17px}.citizen-admin-title p{font-size:11px}}
 </style>
 </head>
 
@@ -966,6 +971,7 @@ footer strong{color:var(--blue)}
     <button data-name="Presensi Perangkat"><i>◷</i>Presensi Perangkat</button>
     <button data-name="Monitoring Presensi"><i>▥</i>Monitoring Presensi</button>
     <button data-name="Rekap Presensi"><i>▤</i>Rekap Presensi</button>
+    <button data-name="Manajemen Akun Masyarakat"><i>♙</i>Akun Masyarakat</button>
     <button data-name="Pembangunan"><i>⌂</i>Pembangunan</button>
     <button data-name="Dokumen & Arsip"><i>▤</i>Dokumen & Arsip</button>
   </nav>
@@ -1070,6 +1076,7 @@ footer strong{color:var(--blue)}
 
     <div class="module" data-search="pemerintahan desa administrasi perangkat" data-name="Pemerintahan Desa"><div class="module-icon">🏛</div><h3>Pemerintahan Desa</h3><p>Administrasi pemerintahan, jabatan, tugas, agenda, dan pengelolaan perangkat.</p><span class="tag">CORE</span></div>
     <div class="module goldcard" data-search="presensi absensi perangkat kehadiran" data-name="Presensi Perangkat"><div class="module-icon">◷</div><h3>Presensi Perangkat</h3><p>Presensi masuk/pulang, rekap kehadiran, dan pengelolaan presensi.</p><span class="tag goldtag">TAHAP 2</span></div>
+    <div class="module" data-search="akun masyarakat user registrasi verifikasi aktivasi nonaktif reset pin" data-name="Manajemen Akun Masyarakat"><div class="module-icon">♙</div><h3>Manajemen Akun Masyarakat</h3><p>Verifikasi pendaftaran, aktivasi akun, nonaktifkan akun, dan reset PIN masyarakat.</p><span class="tag">ADMIN</span></div>
     <div class="module" data-search="layanan masyarakat surat online permohonan" data-name="Layanan Masyarakat"><div class="module-icon">▣</div><h3>Layanan Masyarakat</h3><p>Pengajuan layanan, persyaratan, proses, dan status permohonan.</p><span class="tag">TAHAP 3</span></div>
     <div class="module goldcard" data-search="pengaduan masyarakat laporan keluhan" data-name="Pengaduan"><div class="module-icon">!</div><h3>Pengaduan Masyarakat</h3><p>Kanal aspirasi, laporan, klasifikasi, tindak lanjut, dan status.</p><span class="tag goldtag">TAHAP 4</span></div>
     <div class="module" data-search="kependudukan penduduk kk nik warga" data-name="Kependudukan"><div class="module-icon">♙</div><h3>Kependudukan</h3><p>Data penduduk, KK, wilayah, RT/RW, dan administrasi kependudukan.</p><span class="tag">DATA</span></div>
@@ -1115,6 +1122,16 @@ footer strong{color:var(--blue)}
 </main>
 </div>
 
+
+<div class="citizen-admin-modal hidden" id="citizenAdminModal" role="dialog" aria-modal="true" aria-labelledby="citizenAdminTitle">
+  <div class="citizen-admin-card">
+    <div class="citizen-admin-head"><div class="citizen-admin-title"><div class="citizen-admin-icon">♙</div><div><h2 id="citizenAdminTitle">Manajemen Akun Masyarakat</h2><p>Verifikasi dan kelola akun masyarakat dari sheet USERS.</p></div></div><button class="citizen-admin-close" id="citizenAdminClose" type="button" aria-label="Tutup">×</button></div>
+    <div class="citizen-admin-body"><div class="citizen-admin-summary"><div class="citizen-summary-box"><span>Total Akun</span><strong id="citizenTotal">0</strong></div><div class="citizen-summary-box pending"><span>Menunggu Verifikasi</span><strong id="citizenPending">0</strong></div><div class="citizen-summary-box active"><span>Aktif</span><strong id="citizenActive">0</strong></div><div class="citizen-summary-box inactive"><span>Tidak Aktif</span><strong id="citizenInactive">0</strong></div></div>
+      <div class="citizen-admin-toolbar"><input class="citizen-admin-search" id="citizenAdminSearch" type="search" placeholder="Cari nama, NIK, USER_CODE..."><select class="citizen-admin-select" id="citizenAdminStatus"><option value="">Semua Status</option><option value="MENUNGGU_VERIFIKASI">Menunggu Verifikasi</option><option value="AKTIF">Aktif</option><option value="NONAKTIF">Tidak Aktif</option></select><button class="citizen-admin-refresh" id="citizenAdminRefresh" type="button">↻ Segarkan</button></div>
+      <div class="citizen-admin-table-wrap" id="citizenAdminTableWrap"><div class="citizen-loading">Memuat akun masyarakat...</div></div><div class="citizen-admin-foot"><span id="citizenAdminInfo">—</span><span>Akses: Super Admin • Kepala Desa • Sekretaris Desa</span></div>
+    </div>
+  </div>
+</div>
 
 <div class="data-modal hidden" id="perangkatModal" role="dialog" aria-modal="true" aria-labelledby="perangkatModalTitle">
   <div class="data-modal-card">
@@ -1969,6 +1986,11 @@ function openModule(name){
 
   if(name === 'Rekap Presensi'){
     openRekapPresensi();
+    return;
+  }
+
+  if(name === 'Manajemen Akun Masyarakat'){
+    openCitizenAdmin();
     return;
   }
 
@@ -2838,6 +2860,19 @@ async function openPresensiPerangkat(){
 }
 
 
+/* ---------- MANAJEMEN AKUN MASYARAKAT ---------- */
+let citizenAdminData=[];
+function showCitizenAdminModal(){document.getElementById('citizenAdminModal').classList.remove('hidden');document.body.style.overflow='hidden';}
+function closeCitizenAdmin(){document.getElementById('citizenAdminModal').classList.add('hidden');document.body.style.overflow='';}
+function citizenStatusLabel(status){const s=String(status||'').toUpperCase();if(s==='MENUNGGU_VERIFIKASI')return '<span class="citizen-status pending">MENUNGGU VERIFIKASI</span>';if(s==='AKTIF')return '<span class="citizen-status active">AKTIF</span>';return '<span class="citizen-status inactive">'+esc(s||'TIDAK AKTIF')+'</span>';}
+function citizenDate(v){if(!v)return '-';const d=new Date(v);return isNaN(d.getTime())?esc(String(v)):d.toLocaleString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function renderCitizenAdmin(){const wrap=document.getElementById('citizenAdminTableWrap'),q=document.getElementById('citizenAdminSearch').value.toLowerCase().trim(),status=document.getElementById('citizenAdminStatus').value;let rows=citizenAdminData.slice();if(status)rows=rows.filter(x=>String(x.status||'').toUpperCase()===status);if(q)rows=rows.filter(x=>[x.userCode,x.username,x.nik,x.fullName,x.status].join(' ').toLowerCase().includes(q));if(!rows.length){wrap.innerHTML='<div class="citizen-empty">Tidak ada akun masyarakat sesuai filter.</div>';return;}wrap.innerHTML='<table class="citizen-admin-table"><thead><tr><th>USER_CODE</th><th>Nama</th><th>NIK</th><th>Status</th><th>Terdaftar</th><th>Login Terakhir</th><th>Aksi</th></tr></thead><tbody>'+rows.map(x=>{const st=String(x.status||'').toUpperCase();const approve=st==='MENUNGGU_VERIFIKASI'?'<button class="citizen-action approve" data-action="approve" data-code="'+escAttr(x.userCode)+'">✓ Verifikasi</button>':'';const toggle=st==='AKTIF'?'<button class="citizen-action danger" data-action="deactivate" data-code="'+escAttr(x.userCode)+'">Nonaktifkan</button>':(st==='NONAKTIF'?'<button class="citizen-action approve" data-action="activate" data-code="'+escAttr(x.userCode)+'">Aktifkan</button>':'');const reset='<button class="citizen-action neutral" data-action="resetpin" data-code="'+escAttr(x.userCode)+'">Reset PIN</button>';return '<tr><td><strong>'+esc(x.userCode)+'</strong></td><td>'+esc(x.fullName||'-')+'</td><td>'+esc(x.nik||'-')+'</td><td>'+citizenStatusLabel(st)+'</td><td>'+citizenDate(x.createdAt)+'</td><td>'+citizenDate(x.lastLogin)+'</td><td><div class="citizen-actions">'+approve+toggle+reset+'</div></td></tr>';}).join('')+'</tbody></table>';wrap.querySelectorAll('[data-action]').forEach(btn=>btn.addEventListener('click',()=>handleCitizenAdminAction(btn.dataset.action,btn.dataset.code)));}
+function escAttr(v){return String(v??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+async function loadCitizenAccounts(){if(!currentSession||!currentUser?.userCode){toast('Akun Masyarakat','Sesi perangkat tidak tersedia.');return;}const wrap=document.getElementById('citizenAdminTableWrap');wrap.innerHTML='<div class="citizen-loading">⟳ Mengambil daftar akun masyarakat...</div>';try{const result=await jsonp('citizen_accounts',{userId:currentUser.userCode,token:currentSession},15000);if(!result||!result.success){if(result?.code==='SESSION_INVALID'){clearSession();closeCitizenAdmin();showLogin();setLoginStatus('Sesi telah berakhir. Silakan login kembali.','error');return;}throw new Error(result?.message||'Daftar akun gagal dimuat.');}citizenAdminData=Array.isArray(result.data)?result.data:[];const s=result.summary||{};document.getElementById('citizenTotal').textContent=s.total??0;document.getElementById('citizenPending').textContent=s.menungguVerifikasi??0;document.getElementById('citizenActive').textContent=s.aktif??0;document.getElementById('citizenInactive').textContent=s.tidakAktif??0;document.getElementById('citizenAdminInfo').textContent=citizenAdminData.length+' akun ditampilkan • diperbarui '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});renderCitizenAdmin();}catch(err){wrap.innerHTML='<div class="citizen-error">'+esc(err.message||'Gagal memuat akun masyarakat.')+'</div>';toast('Akun Masyarakat',err.message||'Gagal memuat data.');}}
+async function citizenAdminMutation(action,code,payload={}){const endpoint=action==='resetpin'?'reset_citizen_pin':'set_citizen_status';const params={userId:currentUser.userCode,token:currentSession,citizenUserCode:code};if(action==='resetpin')Object.assign(params,payload);else params.status=action==='approve'||action==='activate'?'AKTIF':'NONAKTIF';return await jsonp(endpoint,params,15000);}
+async function handleCitizenAdminAction(action,code){const item=citizenAdminData.find(x=>String(x.userCode)===String(code));if(!item)return;if(action==='approve'&&!confirm('Verifikasi dan aktifkan akun '+item.fullName+' ('+code+')?'))return;if(action==='deactivate'&&!confirm('Nonaktifkan akun '+item.fullName+' ('+code+')? Akun tidak dapat login selama nonaktif.'))return;if(action==='activate'&&!confirm('Aktifkan kembali akun '+item.fullName+' ('+code+')?'))return;if(action==='resetpin'){const pin=prompt('Masukkan PIN baru 6 digit untuk '+item.fullName+':');if(pin===null)return;const confirmPin=prompt('Ulangi PIN baru:');if(confirmPin===null)return;if(!/^\d{6}$/.test(pin)||pin!==confirmPin){toast('Reset PIN','PIN harus 6 digit dan konfirmasi harus sama.');return;}try{const r=await citizenAdminMutation(action,code,{newPin:pin,confirmPin:confirmPin});if(!r?.success)throw new Error(r?.message||'Reset PIN gagal.');toast('Reset PIN','PIN '+item.fullName+' berhasil diperbarui.');await loadCitizenAccounts();}catch(e){toast('Reset PIN',e.message||'Reset PIN gagal.');}return;}try{const r=await citizenAdminMutation(action,code);if(!r?.success)throw new Error(r?.message||'Perubahan status gagal.');toast('Akun Masyarakat',r.message||'Status akun berhasil diperbarui.');await loadCitizenAccounts();}catch(e){toast('Akun Masyarakat',e.message||'Perubahan status gagal.');}}
+async function openCitizenAdmin(){const role=String(currentUser?.roleCode||'').toUpperCase();if(!['SUPER_ADMIN','KEPALA_DESA','SEKRETARIS_DESA'].includes(role)){toast('Akses Ditolak','Manajemen akun masyarakat hanya untuk Super Admin, Kepala Desa, atau Sekretaris Desa.');return;}showCitizenAdminModal();await loadCitizenAccounts();}
+
 /* ---------- REGISTRASI MASYARAKAT ---------- */
 
 function openCitizenRegistration(){
@@ -3280,6 +3315,12 @@ document.getElementById('perangkatDetailModal').addEventListener('click',e=>{
   if(e.target.id === 'perangkatDetailModal') closePerangkatDetail();
 });
 
+document.getElementById('citizenAdminClose').addEventListener('click',closeCitizenAdmin);
+document.getElementById('citizenAdminRefresh').addEventListener('click',loadCitizenAccounts);
+document.getElementById('citizenAdminSearch').addEventListener('input',renderCitizenAdmin);
+document.getElementById('citizenAdminStatus').addEventListener('change',renderCitizenAdmin);
+document.getElementById('citizenAdminModal').addEventListener('click',e=>{if(e.target.id==='citizenAdminModal')closeCitizenAdmin();});
+
 document.getElementById('perangkatRefresh').addEventListener('click',loadPerangkatDesa);
 document.getElementById('perangkatSearch').addEventListener('input',renderPerangkatTable);
 document.getElementById('perangkatModal').addEventListener('click',e=>{
@@ -3301,6 +3342,10 @@ document.addEventListener('keydown',e=>{
     }
     if(!document.getElementById('perangkatDetailModal').classList.contains('hidden')){
       closePerangkatDetail();
+      return;
+    }
+    if(!document.getElementById('citizenAdminModal').classList.contains('hidden')){
+      closeCitizenAdmin();
       return;
     }
     if(!document.getElementById('perangkatModal').classList.contains('hidden')){
