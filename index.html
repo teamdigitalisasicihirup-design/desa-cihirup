@@ -1049,7 +1049,7 @@ function renderComplaintAdmin(){
   );
 }
 
-async function handleComplaintAdmin(action,id){
+async async function handleComplaintAdmin(action,id){
   const item=complaintData.find(x=>String(x.id)===String(id));
   if(!item)return;
   let status=action,note=item.tanggapan||'',follow=item.tindakLanjut||'';
