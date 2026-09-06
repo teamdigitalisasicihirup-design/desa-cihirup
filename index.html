@@ -2926,60 +2926,7 @@ function printRekapPresensi(){
     '<table><thead><tr><th>Tanggal</th><th>Perangkat</th><th>Jabatan</th><th>Dusun</th><th>Status</th><th>Masuk</th><th>Pulang</th><th>Keterangan</th></tr></thead>'+
     '<tbody>'+rows+'</tbody></table>'+
     '<div class="sign">Dicetak dari CIHIRUP LINK</div>'+
-    '
-<script>
-/* ---------- ADMINISTRASI LAYANAN ---------- */
-let serviceAdminData=[];
-function showServiceAdminModal(){document.getElementById('serviceAdminModal').classList.remove('hidden');document.body.style.overflow='hidden';}
-function closeServiceAdmin(){document.getElementById('serviceAdminModal').classList.add('hidden');document.body.style.overflow='';}
-function serviceAdminStatusClass(status){return String(status||'').toLowerCase().replace(/[^a-z]/g,'');}
-function serviceAdminStatusLabel(status){const s=String(status||'').toUpperCase();return '<span class="service-admin-status '+serviceAdminStatusClass(s)+'">'+esc(s||'-')+'</span>';}
-function serviceAdminDate(v){if(!v)return '-';const d=new Date(v);return isNaN(d.getTime())?esc(String(v)):d.toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
-function renderServiceAdmin(){
- const wrap=document.getElementById('serviceAdminTableWrap'),q=document.getElementById('serviceAdminSearch').value.toLowerCase().trim(),status=document.getElementById('serviceAdminStatus').value;let rows=serviceAdminData.slice();
- if(status)rows=rows.filter(x=>String(x.status||'').toUpperCase()===status);
- if(q)rows=rows.filter(x=>[x.number,x.name,x.nik,x.userCode,x.serviceName,x.subject,x.description,x.status].join(' ').toLowerCase().includes(q));
- if(!rows.length){wrap.innerHTML='<div class="service-admin-empty">Tidak ada permohonan sesuai filter.</div>';return;}
- wrap.innerHTML='<table class="service-admin-table"><thead><tr><th>No. Permohonan</th><th>Pemohon</th><th>Layanan</th><th>Keperluan</th><th>Status</th><th>Catatan</th><th>Diajukan</th><th>Aksi</th></tr></thead><tbody>'+
- rows.map(x=>{const st=String(x.status||'').toUpperCase();let actions='';
-   if(st==='DIAJUKAN'){actions+='<button class="service-admin-action process" data-sa="DIPROSES" data-id="'+escAttr(x.id)+'">▶ Proses</button>';actions+='<button class="service-admin-action reject" data-sa="DITOLAK" data-id="'+escAttr(x.id)+'">✕ Tolak</button>';}
-   else if(st==='DIPROSES'){actions+='<button class="service-admin-action done" data-sa="SELESAI" data-id="'+escAttr(x.id)+'">✓ Selesai</button>';actions+='<button class="service-admin-action reject" data-sa="DITOLAK" data-id="'+escAttr(x.id)+'">✕ Tolak</button>';}
-   else{actions+='<button class="service-admin-action reopen" data-sa="DIPROSES" data-id="'+escAttr(x.id)+'">↻ Proses Lagi</button>';}
-   actions+='<button class="service-admin-action note" data-sa="NOTE" data-id="'+escAttr(x.id)+'">✎ Catatan</button>';
-   return '<tr><td><div class="number">'+esc(x.number||'-')+'</div></td><td><div class="person"><strong>'+esc(x.name||'-')+'</strong><small>NIK: '+esc(x.nik||'-')+'</small><small>'+esc(x.userCode||'')+'</small></div></td><td>'+esc(x.serviceName||'-')+'</td><td><strong>'+esc(x.subject||'-')+'</strong><br><span style="color:#7890a0">'+esc(x.description||'')+'</span></td><td>'+serviceAdminStatusLabel(st)+'</td><td><div class="service-admin-note">'+esc(x.note||'—')+'</div></td><td>'+serviceAdminDate(x.createdAt)+'</td><td><div class="service-admin-actions">'+actions+'</div></td></tr>';
- }).join('')+'</tbody></table>';
- wrap.querySelectorAll('[data-sa]').forEach(btn=>btn.addEventListener('click',()=>handleServiceAdminAction(btn.dataset.sa,btn.dataset.id)));
-}
-async function loadServiceAdmin(){
- if(!currentSession||!currentUser?.userCode){toast('Administrasi Layanan','Sesi perangkat tidak tersedia.');return;}
- const wrap=document.getElementById('serviceAdminTableWrap');wrap.innerHTML='<div class="service-admin-loading">⟳ Mengambil permohonan masyarakat...</div>';
- try{const r=await jsonp('service_admin',{userId:currentUser.userCode,token:currentSession},15000);
-   if(!r?.success){if(r?.code==='SESSION_INVALID'){clearSession();closeServiceAdmin();showLogin();setLoginStatus('Sesi telah berakhir. Silakan login kembali.','error');return;}throw new Error(r?.message||'Daftar permohonan gagal dimuat.');}
-   serviceAdminData=Array.isArray(r.data)?r.data:[];const s=r.summary||{};
-   document.getElementById('serviceAdminTotal').textContent=s.total??0;document.getElementById('serviceAdminPending').textContent=s.diajukan??0;document.getElementById('serviceAdminProcess').textContent=s.diproses??0;document.getElementById('serviceAdminDone').textContent=s.selesai??0;document.getElementById('serviceAdminRejected').textContent=s.ditolak??0;
-   document.getElementById('serviceAdminInfo').textContent=serviceAdminData.length+' permohonan ditampilkan • diperbarui '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});renderServiceAdmin();
- }catch(err){wrap.innerHTML='<div class="service-admin-error">'+esc(err.message||'Gagal memuat permohonan.')+'</div>';toast('Administrasi Layanan',err.message||'Gagal memuat data.');}
-}
-async function updateServiceRequest(id,status,note){return await jsonp('update_service_request',{userId:currentUser.userCode,token:currentSession,requestId:id,status:status,note:note||''},15000);}
-async function handleServiceAdminAction(action,id){
- const item=serviceAdminData.find(x=>String(x.id)===String(id));if(!item)return;let status=action,note=item.note||'';
- if(action==='NOTE'){const next=prompt('Catatan admin untuk '+(item.number||'permohonan')+':',note);if(next===null)return;note=next.trim();status=String(item.status||'DIAJUKAN').toUpperCase();}
- else{const label={DIPROSES:'memproses',SELESAI:'menyelesaikan',DITOLAK:'menolak'}[status]||'mengubah status';if(!confirm('Yakin akan '+label+' permohonan '+(item.number||'-')+' milik '+(item.name||'-')+'?'))return;const entered=prompt('Catatan admin (opsional):',note);if(entered===null)return;note=entered.trim();}
- try{const r=await updateServiceRequest(id,status,note);if(!r?.success)throw new Error(r?.message||'Perubahan permohonan gagal.');toast('Administrasi Layanan',r.message||'Permohonan berhasil diperbarui.');await loadServiceAdmin();}catch(e){toast('Administrasi Layanan',e.message||'Perubahan permohonan gagal.');}
-}
-async function openServiceAdmin(){
- const role=String(currentUser?.roleCode||'').toUpperCase();
- if(!['SUPER_ADMIN','KEPALA_DESA','SEKRETARIS_DESA','KASI_PELAYANAN'].includes(role)){toast('Akses Ditolak','Administrasi layanan hanya untuk Super Admin, Kepala Desa, Sekretaris Desa, atau Kasi Pelayanan.');return;}
- showServiceAdminModal();await loadServiceAdmin();
-}
-document.getElementById('serviceAdminClose').addEventListener('click',closeServiceAdmin);
-document.getElementById('serviceAdminRefresh').addEventListener('click',loadServiceAdmin);
-document.getElementById('serviceAdminSearch').addEventListener('input',renderServiceAdmin);
-document.getElementById('serviceAdminStatus').addEventListener('change',renderServiceAdmin);
-document.getElementById('serviceAdminModal').addEventListener('click',e=>{if(e.target.id==='serviceAdminModal')closeServiceAdmin();});
-</script>
-
-</body></html>'
+    '</body></html>'
   );
 
   win.document.close();
@@ -3560,3 +3507,55 @@ document.addEventListener('keydown',e=>{
 </script>
 </body>
 </html>
+
+
+/* ---------- ADMINISTRASI LAYANAN ---------- */
+let serviceAdminData=[];
+function showServiceAdminModal(){document.getElementById('serviceAdminModal').classList.remove('hidden');document.body.style.overflow='hidden';}
+function closeServiceAdmin(){document.getElementById('serviceAdminModal').classList.add('hidden');document.body.style.overflow='';}
+function serviceAdminStatusClass(status){return String(status||'').toLowerCase().replace(/[^a-z]/g,'');}
+function serviceAdminStatusLabel(status){const s=String(status||'').toUpperCase();return '<span class="service-admin-status '+serviceAdminStatusClass(s)+'">'+esc(s||'-')+'</span>';}
+function serviceAdminDate(v){if(!v)return '-';const d=new Date(v);return isNaN(d.getTime())?esc(String(v)):d.toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function renderServiceAdmin(){
+ const wrap=document.getElementById('serviceAdminTableWrap'),q=document.getElementById('serviceAdminSearch').value.toLowerCase().trim(),status=document.getElementById('serviceAdminStatus').value;let rows=serviceAdminData.slice();
+ if(status)rows=rows.filter(x=>String(x.status||'').toUpperCase()===status);
+ if(q)rows=rows.filter(x=>[x.number,x.name,x.nik,x.userCode,x.serviceName,x.subject,x.description,x.status].join(' ').toLowerCase().includes(q));
+ if(!rows.length){wrap.innerHTML='<div class="service-admin-empty">Tidak ada permohonan sesuai filter.</div>';return;}
+ wrap.innerHTML='<table class="service-admin-table"><thead><tr><th>No. Permohonan</th><th>Pemohon</th><th>Layanan</th><th>Keperluan</th><th>Status</th><th>Catatan</th><th>Diajukan</th><th>Aksi</th></tr></thead><tbody>'+
+ rows.map(x=>{const st=String(x.status||'').toUpperCase();let actions='';
+   if(st==='DIAJUKAN'){actions+='<button class="service-admin-action process" data-sa="DIPROSES" data-id="'+escAttr(x.id)+'">▶ Proses</button>';actions+='<button class="service-admin-action reject" data-sa="DITOLAK" data-id="'+escAttr(x.id)+'">✕ Tolak</button>';}
+   else if(st==='DIPROSES'){actions+='<button class="service-admin-action done" data-sa="SELESAI" data-id="'+escAttr(x.id)+'">✓ Selesai</button>';actions+='<button class="service-admin-action reject" data-sa="DITOLAK" data-id="'+escAttr(x.id)+'">✕ Tolak</button>';}
+   else{actions+='<button class="service-admin-action reopen" data-sa="DIPROSES" data-id="'+escAttr(x.id)+'">↻ Proses Lagi</button>';}
+   actions+='<button class="service-admin-action note" data-sa="NOTE" data-id="'+escAttr(x.id)+'">✎ Catatan</button>';
+   return '<tr><td><div class="number">'+esc(x.number||'-')+'</div></td><td><div class="person"><strong>'+esc(x.name||'-')+'</strong><small>NIK: '+esc(x.nik||'-')+'</small><small>'+esc(x.userCode||'')+'</small></div></td><td>'+esc(x.serviceName||'-')+'</td><td><strong>'+esc(x.subject||'-')+'</strong><br><span style="color:#7890a0">'+esc(x.description||'')+'</span></td><td>'+serviceAdminStatusLabel(st)+'</td><td><div class="service-admin-note">'+esc(x.note||'—')+'</div></td><td>'+serviceAdminDate(x.createdAt)+'</td><td><div class="service-admin-actions">'+actions+'</div></td></tr>';
+ }).join('')+'</tbody></table>';
+ wrap.querySelectorAll('[data-sa]').forEach(btn=>btn.addEventListener('click',()=>handleServiceAdminAction(btn.dataset.sa,btn.dataset.id)));
+}
+async function loadServiceAdmin(){
+ if(!currentSession||!currentUser?.userCode){toast('Administrasi Layanan','Sesi perangkat tidak tersedia.');return;}
+ const wrap=document.getElementById('serviceAdminTableWrap');wrap.innerHTML='<div class="service-admin-loading">⟳ Mengambil permohonan masyarakat...</div>';
+ try{const r=await jsonp('service_admin',{userId:currentUser.userCode,token:currentSession},15000);
+   if(!r?.success){if(r?.code==='SESSION_INVALID'){clearSession();closeServiceAdmin();showLogin();setLoginStatus('Sesi telah berakhir. Silakan login kembali.','error');return;}throw new Error(r?.message||'Daftar permohonan gagal dimuat.');}
+   serviceAdminData=Array.isArray(r.data)?r.data:[];const s=r.summary||{};
+   document.getElementById('serviceAdminTotal').textContent=s.total??0;document.getElementById('serviceAdminPending').textContent=s.diajukan??0;document.getElementById('serviceAdminProcess').textContent=s.diproses??0;document.getElementById('serviceAdminDone').textContent=s.selesai??0;document.getElementById('serviceAdminRejected').textContent=s.ditolak??0;
+   document.getElementById('serviceAdminInfo').textContent=serviceAdminData.length+' permohonan ditampilkan • diperbarui '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});renderServiceAdmin();
+ }catch(err){wrap.innerHTML='<div class="service-admin-error">'+esc(err.message||'Gagal memuat permohonan.')+'</div>';toast('Administrasi Layanan',err.message||'Gagal memuat data.');}
+}
+async function updateServiceRequest(id,status,note){return await jsonp('update_service_request',{userId:currentUser.userCode,token:currentSession,requestId:id,status:status,note:note||''},15000);}
+async function handleServiceAdminAction(action,id){
+ const item=serviceAdminData.find(x=>String(x.id)===String(id));if(!item)return;let status=action,note=item.note||'';
+ if(action==='NOTE'){const next=prompt('Catatan admin untuk '+(item.number||'permohonan')+':',note);if(next===null)return;note=next.trim();status=String(item.status||'DIAJUKAN').toUpperCase();}
+ else{const label={DIPROSES:'memproses',SELESAI:'menyelesaikan',DITOLAK:'menolak'}[status]||'mengubah status';if(!confirm('Yakin akan '+label+' permohonan '+(item.number||'-')+' milik '+(item.name||'-')+'?'))return;const entered=prompt('Catatan admin (opsional):',note);if(entered===null)return;note=entered.trim();}
+ try{const r=await updateServiceRequest(id,status,note);if(!r?.success)throw new Error(r?.message||'Perubahan permohonan gagal.');toast('Administrasi Layanan',r.message||'Permohonan berhasil diperbarui.');await loadServiceAdmin();}catch(e){toast('Administrasi Layanan',e.message||'Perubahan permohonan gagal.');}
+}
+async function openServiceAdmin(){
+ const role=String(currentUser?.roleCode||'').toUpperCase();
+ if(!['SUPER_ADMIN','KEPALA_DESA','SEKRETARIS_DESA','KASI_PELAYANAN'].includes(role)){toast('Akses Ditolak','Administrasi layanan hanya untuk Super Admin, Kepala Desa, Sekretaris Desa, atau Kasi Pelayanan.');return;}
+ showServiceAdminModal();await loadServiceAdmin();
+}
+document.getElementById('serviceAdminClose').addEventListener('click',closeServiceAdmin);
+document.getElementById('serviceAdminRefresh').addEventListener('click',loadServiceAdmin);
+document.getElementById('serviceAdminSearch').addEventListener('input',renderServiceAdmin);
+document.getElementById('serviceAdminStatus').addEventListener('change',renderServiceAdmin);
+document.getElementById('serviceAdminModal').addEventListener('click',e=>{if(e.target.id==='serviceAdminModal')closeServiceAdmin();});
+
