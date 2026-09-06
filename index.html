@@ -308,6 +308,70 @@ footer strong{color:var(--blue)}
   .data-search{width:100%;max-width:none}
 }
 
+
+/* =========================================================
+   DETAIL PERANGKAT DESA
+   ========================================================= */
+.detail-modal{
+  position:fixed;inset:0;z-index:1100;display:grid;place-items:center;
+  padding:20px;background:rgba(4,35,66,.56);backdrop-filter:blur(6px);
+}
+.detail-modal.hidden{display:none!important}
+.detail-card{
+  width:min(760px,100%);max-height:88vh;overflow:auto;background:#fff;
+  border:1px solid var(--line);border-radius:24px;
+  box-shadow:0 30px 90px rgba(7,59,112,.3);
+}
+.detail-head{
+  position:sticky;top:0;z-index:3;display:flex;align-items:center;
+  justify-content:space-between;gap:15px;padding:18px 20px;
+  background:linear-gradient(135deg,#f7fcff,#fffdf5);
+  border-bottom:1px solid var(--line);
+}
+.detail-person{display:flex;align-items:center;gap:13px}
+.detail-avatar{
+  width:54px;height:54px;border-radius:16px;display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--blue2),var(--navy));color:#fff;
+  font-size:21px;font-weight:900;
+}
+.detail-person h2{font-size:19px;color:var(--navy)}
+.detail-person p{font-size:11px;color:var(--muted);margin-top:3px}
+.detail-close{
+  width:40px;height:40px;border:1px solid var(--line);border-radius:12px;
+  background:#fff;color:var(--navy);font-size:22px;cursor:pointer;
+}
+.detail-body{padding:20px}
+.detail-status{
+  display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:99px;
+  background:#eaf9f0;color:#18834b;font-size:10px;font-weight:900;margin-bottom:16px;
+}
+.detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.detail-item{
+  padding:12px 13px;border:1px solid var(--line);border-radius:13px;background:#fbfdff;
+}
+.detail-item.full{grid-column:1/-1}
+.detail-item label{
+  display:block;font-size:9px;color:var(--muted);font-weight:900;
+  text-transform:uppercase;letter-spacing:.45px;margin-bottom:5px;
+}
+.detail-item div{font-size:12px;color:var(--ink);font-weight:700;word-break:break-word}
+.detail-foot{
+  padding:13px 20px;border-top:1px solid var(--line);background:#fbfdff;
+  color:var(--muted);font-size:10px;
+}
+.detail-action{
+  margin-top:16px;width:100%;border:0;border-radius:12px;padding:11px;
+  background:var(--blue);color:#fff;font-weight:900;cursor:pointer;
+}
+.data-table tbody tr{cursor:pointer}
+.data-table tbody tr:focus{outline:2px solid var(--blue2);outline-offset:-2px}
+@media(max-width:650px){
+  .detail-modal{padding:10px}
+  .detail-card{max-height:93vh;border-radius:18px}
+  .detail-grid{grid-template-columns:1fr}
+  .detail-item.full{grid-column:auto}
+}
+
 </style>
 </head>
 
@@ -550,6 +614,28 @@ footer strong{color:var(--blue)}
       <span class="data-note" id="perangkatNote">Sumber: PERANGKAT_DESA • Mode baca</span>
       <button class="data-refresh" type="button" id="perangkatRefresh">↻ Segarkan</button>
     </div>
+  </div>
+</div>
+
+
+<div class="detail-modal hidden" id="perangkatDetailModal" role="dialog" aria-modal="true" aria-labelledby="perangkatDetailTitle">
+  <div class="detail-card">
+    <div class="detail-head">
+      <div class="detail-person">
+        <div class="detail-avatar" id="detailAvatar">P</div>
+        <div>
+          <h2 id="perangkatDetailTitle">Detail Perangkat Desa</h2>
+          <p id="detailSubtitle">Informasi perangkat desa</p>
+        </div>
+      </div>
+      <button class="detail-close" id="detailClose" type="button" aria-label="Tutup">×</button>
+    </div>
+    <div class="detail-body">
+      <span class="detail-status" id="detailStatus">● AKTIF</span>
+      <div class="detail-grid" id="detailGrid"></div>
+      <button class="detail-action" id="detailBack" type="button">← Kembali ke Daftar Perangkat Desa</button>
+    </div>
+    <div class="detail-foot">Data bersumber langsung dari sheet PERANGKAT_DESA • Mode baca</div>
   </div>
 </div>
 
@@ -889,13 +975,15 @@ function renderPerangkatTable(){
   const count = document.getElementById('perangkatCount');
   const q = document.getElementById('perangkatSearch').value.toLowerCase().trim();
 
-  let rows = perangkatRows;
+  let indexedRows = perangkatRows.map((row,index)=>({row,index}));
   if(q){
-    rows = rows.filter(row => row.some(v => String(v ?? '').toLowerCase().includes(q)));
+    indexedRows = indexedRows.filter(item =>
+      item.row.some(v => String(v ?? '').toLowerCase().includes(q))
+    );
   }
 
   count.textContent = q
-    ? rows.length.toLocaleString('id-ID') + ' data ditemukan'
+    ? indexedRows.length.toLocaleString('id-ID') + ' data ditemukan'
     : perangkatRows.length.toLocaleString('id-ID') + ' perangkat terdaftar';
 
   if(!perangkatRows.length){
@@ -907,15 +995,92 @@ function renderPerangkatTable(){
     ? perangkatHeaders
     : perangkatRows[0].map((_,i)=>'Kolom '+(i+1));
 
-  const thead = headers.map(h=>'<th>'+esc(h)+'</th>').join('');
-  const tbody = rows.map(row =>
-    '<tr>' + headers.map((_,i)=>'<td>'+esc(row[i] ?? '')+'</td>').join('') + '</tr>'
-  ).join('');
+  /*
+   * Tabel ringkas agar nyaman dibaca:
+   * NAMA, JABATAN, NO_HP, STATUS, DUSUN + AKSI.
+   * Data lengkap tetap tersedia pada Detail.
+   */
+  const findHeader = (...names) => {
+    const wanted = names.map(x=>x.toUpperCase());
+    return headers.findIndex(h => wanted.includes(String(h).trim().toUpperCase()));
+  };
+
+  const idxNama = findHeader('NAMA','FULL_NAME','NAMA_LENGKAP');
+  const idxJabatan = findHeader('JABATAN_CODE','JABATAN','JABATAN DESA');
+  const idxPhone = findHeader('NO_HP','NO HP','NO_TELP','NO_TELEPON');
+  const idxStatus = findHeader('STATUS');
+  const idxDusun = findHeader('DUSUN_CODE','DUSUN');
+
+  const td = (row, idx) => esc(idx >= 0 ? (row[idx] ?? '') : '');
+
+  const tbody = indexedRows.map(item => {
+    const row = item.row;
+    const i = item.index;
+    const status = String(idxStatus >= 0 ? row[idxStatus] ?? '' : '').toUpperCase();
+    const statusHtml = status
+      ? '<span style="font-weight:900;color:'+(status==='AKTIF'?'#18834b':'#a56a00')+'">'+esc(status)+'</span>'
+      : '-';
+
+    return '<tr tabindex="0" data-row-index="'+i+'" onclick="openPerangkatDetail('+i+')">' +
+      '<td><strong>'+td(row,idxNama)+'</strong></td>' +
+      '<td>'+td(row,idxJabatan)+'</td>' +
+      '<td>'+td(row,idxPhone)+'</td>' +
+      '<td>'+statusHtml+'</td>' +
+      '<td>'+td(row,idxDusun)+'</td>' +
+      '<td><button type="button" class="data-refresh" style="padding:6px 9px" onclick="event.stopPropagation();openPerangkatDetail('+i+')">Detail</button></td>' +
+      '</tr>';
+  }).join('');
 
   wrap.innerHTML =
-    '<table class="data-table"><thead><tr>'+thead+'</tr></thead>' +
-    '<tbody>'+(tbody || '<tr><td colspan="'+headers.length+'">Tidak ada data yang sesuai pencarian.</td></tr>')+
+    '<table class="data-table" style="min-width:760px">' +
+    '<thead><tr><th>Nama</th><th>Jabatan</th><th>No. HP</th><th>Status</th><th>Dusun</th><th>Aksi</th></tr></thead>' +
+    '<tbody>'+(tbody || '<tr><td colspan="6">Tidak ada data yang sesuai pencarian.</td></tr>')+
     '</tbody></table>';
+}
+
+function showPerangkatDetailModal(){
+  document.getElementById('perangkatDetailModal').classList.remove('hidden');
+}
+
+function closePerangkatDetail(){
+  document.getElementById('perangkatDetailModal').classList.add('hidden');
+}
+
+function openPerangkatDetail(index){
+  const row = perangkatRows[index];
+  if(!row) return;
+
+  const headers = perangkatHeaders.length
+    ? perangkatHeaders
+    : row.map((_,i)=>'Kolom '+(i+1));
+
+  const get = (...names) => {
+    const wanted = names.map(x=>x.toUpperCase());
+    const idx = headers.findIndex(h=>wanted.includes(String(h).trim().toUpperCase()));
+    return idx >= 0 ? String(row[idx] ?? '') : '';
+  };
+
+  const nama = get('NAMA','FULL_NAME','NAMA_LENGKAP') || 'Perangkat Desa';
+  const jabatan = get('JABATAN_CODE','JABATAN','JABATAN DESA');
+  const status = get('STATUS') || 'AKTIF';
+
+  document.getElementById('detailAvatar').textContent =
+    nama.trim().charAt(0).toUpperCase() || 'P';
+  document.getElementById('perangkatDetailTitle').textContent = nama;
+  document.getElementById('detailSubtitle').textContent =
+    jabatan ? roleLabel(jabatan) : 'Perangkat Desa';
+  document.getElementById('detailStatus').textContent = '● ' + status.toUpperCase();
+
+  const grid = document.getElementById('detailGrid');
+
+  grid.innerHTML = headers.map((h,i) => {
+    const value = String(row[i] ?? '').trim();
+    const full = ['ID','USER_ID','CREATED_AT','UPDATED_AT'].includes(String(h).trim().toUpperCase());
+    return '<div class="detail-item '+(full?'full':'')+'">' +
+      '<label>'+esc(h)+'</label><div>'+esc(value || '-')+'</div></div>';
+  }).join('');
+
+  showPerangkatDetailModal();
 }
 
 async function loadPerangkatDesa(){
@@ -1044,14 +1209,27 @@ document.getElementById('pin').addEventListener('keydown',e=>{
 
 
 document.getElementById('perangkatModalClose').addEventListener('click',closePerangkatModal);
+
+document.getElementById('detailClose').addEventListener('click',closePerangkatDetail);
+document.getElementById('detailBack').addEventListener('click',closePerangkatDetail);
+document.getElementById('perangkatDetailModal').addEventListener('click',e=>{
+  if(e.target.id === 'perangkatDetailModal') closePerangkatDetail();
+});
+
 document.getElementById('perangkatRefresh').addEventListener('click',loadPerangkatDesa);
 document.getElementById('perangkatSearch').addEventListener('input',renderPerangkatTable);
 document.getElementById('perangkatModal').addEventListener('click',e=>{
   if(e.target.id === 'perangkatModal') closePerangkatModal();
 });
 document.addEventListener('keydown',e=>{
-  if(e.key === 'Escape' && !document.getElementById('perangkatModal').classList.contains('hidden')){
-    closePerangkatModal();
+  if(e.key === 'Escape'){
+    if(!document.getElementById('perangkatDetailModal').classList.contains('hidden')){
+      closePerangkatDetail();
+      return;
+    }
+    if(!document.getElementById('perangkatModal').classList.contains('hidden')){
+      closePerangkatModal();
+    }
   }
 });
 
