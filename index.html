@@ -881,6 +881,12 @@ footer strong{color:var(--blue)}
 
 </style>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9dT/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<style>
+/* V39 PROFIL DESA + PETA DESA */
+.profil-modal,.peta-modal{position:fixed;inset:0;background:rgba(9,31,47,.55);backdrop-filter:blur(3px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}.profil-modal.hidden,.peta-modal.hidden{display:none}.profil-card,.peta-card{width:min(1120px,96vw);max-height:92vh;overflow:auto;background:#fff;border-radius:24px;box-shadow:0 28px 90px rgba(0,0,0,.28)}.profil-head,.peta-head{display:flex;justify-content:space-between;align-items:center;padding:22px 26px;border-bottom:1px solid #e7eef3}.profil-head h2,.peta-head h2{margin:0;color:#173d56}.profil-head p,.peta-head p{margin:5px 0 0;color:#708696;font-size:13px}.v39-close{border:0;background:#edf4f8;color:#23475e;width:38px;height:38px;border-radius:12px;font-size:24px;cursor:pointer}.profil-body{padding:26px}.profil-hero{display:grid;grid-template-columns:1.25fr .75fr;gap:18px;margin-bottom:20px}.profil-intro,.profil-kades,.profil-box{background:#f7fbfd;border:1px solid #e3edf3;border-radius:18px;padding:20px}.profil-intro h3{margin:0 0 8px;color:#173d56;font-size:24px}.profil-intro p{margin:0;color:#5f7685;line-height:1.7}.profil-kades{background:linear-gradient(135deg,#edf8ff,#fff8df)}.profil-kades .label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#728797;font-weight:800}.profil-kades .value{font-size:20px;font-weight:900;color:#173d56;margin-top:7px}.profil-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}.profil-stat{padding:18px;border-radius:16px;background:#fff;border:1px solid #e3edf3}.profil-stat strong{display:block;font-size:25px;color:#1d6286}.profil-stat span{font-size:12px;color:#728797}.profil-columns{display:grid;grid-template-columns:1fr 1fr;gap:18px}.profil-box h4{margin:0 0 12px;color:#173d56}.profil-list{margin:0;padding-left:20px;color:#5d7484;line-height:1.9}.profil-contact{color:#5d7484;line-height:1.8}.peta-body{padding:0}.peta-layout{display:grid;grid-template-columns:320px 1fr;min-height:600px}.peta-side{padding:22px;border-right:1px solid #e5edf2;background:#f8fbfd}.peta-side h3{margin:0 0 8px;color:#173d56}.peta-side p{font-size:12px;color:#6d8190;line-height:1.6}.peta-info{padding:13px 14px;border-radius:14px;background:#fff;border:1px solid #e1ebf1;margin:12px 0}.peta-info strong{display:block;color:#21485e;margin-bottom:4px}.peta-info span{font-size:12px;color:#6d8190}.peta-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.peta-btn{border:0;border-radius:11px;padding:10px 13px;background:#e9f3f8;color:#21485e;font-weight:800;cursor:pointer}.peta-btn.primary{background:#17688f;color:#fff}.peta-map{min-height:600px}.peta-map #desaMap{width:100%;height:100%;min-height:600px}.peta-note{font-size:11px;color:#8799a5;margin-top:12px}.leaflet-container{font:12px/1.4 Arial,sans-serif}.leaflet-popup-content-wrapper{border-radius:12px}.peta-legend{background:#fff;padding:10px 12px;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.15);font-size:11px}.peta-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#17688f;margin-right:6px}.peta-boundary{font-size:11px;color:#718492}@media(max-width:850px){.profil-hero,.profil-columns,.peta-layout{grid-template-columns:1fr}.profil-grid{grid-template-columns:1fr 1fr}.peta-side{border-right:0;border-bottom:1px solid #e5edf2}.peta-map,.peta-map #desaMap{min-height:430px;height:430px}}
+</style>
 </head>
 
 <body>
@@ -1849,6 +1855,45 @@ footer strong{color:var(--blue)}
         <button type="button" class="population-btn primary" id="populationImportStart">Import Data</button>
       </div>
     </div>
+  </div>
+</div>
+
+
+<!-- V39 PROFIL DESA -->
+<div class="profil-modal hidden" id="profilModal" role="dialog" aria-modal="true" aria-labelledby="profilTitle">
+  <div class="profil-card">
+    <div class="profil-head"><div><h2 id="profilTitle">Profil Desa Cihirup</h2><p>Kecamatan Ciawigebang • Kabupaten Kuningan • Jawa Barat</p></div><button class="v39-close" type="button" onclick="closeProfilDesa()">×</button></div>
+    <div class="profil-body">
+      <div class="profil-hero">
+        <div class="profil-intro"><h3>Pemerintah Desa Cihirup</h3><p>Profil singkat Desa Cihirup sebagai bagian dari Kecamatan Ciawigebang, Kabupaten Kuningan. Halaman ini menjadi pusat informasi dasar desa dan akan dikembangkan bertahap agar seluruh data resmi dapat dikelola melalui CIHIRUP LINK.</p></div>
+        <div class="profil-kades"><div class="label">Kepala Desa</div><div class="value" id="profilKepala">Data mengikuti Struktur Pemerintahan Desa</div><div style="font-size:12px;color:#708696;margin-top:6px">Nama akan mengikuti data perangkat desa aktif.</div></div>
+      </div>
+      <div class="profil-grid">
+        <div class="profil-stat"><strong>3</strong><span>Dusun</span></div><div class="profil-stat"><strong>24</strong><span>RT</span></div><div class="profil-stat"><strong>3</strong><span>RW</span></div><div class="profil-stat"><strong>32.08.10.2016</strong><span>Kode wilayah desa</span></div>
+      </div>
+      <div class="profil-columns">
+        <div class="profil-box"><h4>Wilayah Administratif</h4><ul class="profil-list"><li>Dusun Kliwon</li><li>Dusun Manis</li><li>Dusun Wage</li><li>Timur: Desa Ciuyah, Kecamatan Waled, Kabupaten Cirebon</li><li>Barat: Desa Sukadana, Kecamatan Ciawigebang</li><li>Selatan: Desa Cikubangmulya, Desa Kertawana, dan Desa Wanasaraya</li><li>Utara: Desa Seusepan, Desa Sumurkondang, dan Desa Kubangdeleg</li></ul></div>
+        <div class="profil-box"><h4>Alamat Pemerintah Desa</h4><div class="profil-contact"><b>Desa Cihirup</b><br>Jalan Raya Buyut Maskar Nomor 127<br>Desa Cihirup, Kecamatan Ciawigebang<br>Kabupaten Kuningan, Jawa Barat<br>Kode Pos 45593<br><br><b>Kontak:</b> 0232-8880775 / 081144336654<br><b>Email:</b> info@desa-cihirup.kuningankab.go.id</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- V39 PETA DESA -->
+<div class="peta-modal hidden" id="petaModal" role="dialog" aria-modal="true" aria-labelledby="petaTitle">
+  <div class="peta-card">
+    <div class="peta-head"><div><h2 id="petaTitle">Peta Desa Cihirup</h2><p>Lokasi kantor desa dan orientasi wilayah administratif</p></div><button class="v39-close" type="button" onclick="closePetaDesa()">×</button></div>
+    <div class="peta-body"><div class="peta-layout">
+      <aside class="peta-side">
+        <h3>Informasi Peta</h3><p>Peta interaktif menggunakan OpenStreetMap melalui Leaflet. Titik utama menggunakan posisi kantor Desa Cihirup yang dicatat BPS untuk Kecamatan Ciawigebang.</p>
+        <div class="peta-info"><strong>📍 Kantor Desa Cihirup</strong><span>Jalan Raya Buyut Maskar Nomor 127<br>Desa Cihirup, Ciawigebang</span></div>
+        <div class="peta-info"><strong>Koordinat</strong><span>6°55′45″ LS • 108°37′33″ BT<br>(-6.929167, 108.625833)</span></div>
+        <div class="peta-info"><strong>Wilayah</strong><span>3 Dusun • 24 RT • 3 RW</span></div>
+        <div class="peta-actions"><button class="peta-btn primary" onclick="centerCihirupMap()">⌖ Pusatkan</button><button class="peta-btn" onclick="openGoogleMapsCihirup()">↗ Google Maps</button></div>
+        <div class="peta-note">Catatan: garis batas desa belum digambar sebagai polygon karena koordinat titik batas resmi akan kita masukkan pada tahap pemetaan wilayah berikutnya.</div>
+      </aside>
+      <div class="peta-map"><div id="desaMap"></div></div>
+    </div></div>
   </div>
 </div>
 
@@ -3158,6 +3203,45 @@ async function openSuratDisposisi(){if(!currentSession||!currentUser){openLoginC
 function suratSetTab(tab){suratTab=tab;document.querySelectorAll('.surat-tab').forEach(b=>b.classList.toggle('active',b.dataset.suratTab===tab));document.getElementById('suratAdd').style.display=tab==='agenda'?'none':'inline-flex';document.getElementById('suratSearch').value='';renderSurat();}
 
 
+/* =========================================================
+   PROFIL DESA + PETA DESA — FRONTEND V39
+   ========================================================= */
+let desaMapInstance=null;
+const CIHIRUP_MAP={lat:-6.9291667,lng:108.6258333,zoom:15};
+function openProfilDesa(){
+  document.getElementById('profilModal').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+  // Jika data struktur sudah tersedia pada sesi perangkat, tampilkan Kepala Desa dari master.
+  try{
+    if(Array.isArray(window.masterPerangkatRows)){
+      const k=window.masterPerangkatRows.find(x=>String(x.JABATAN_CODE||'').toUpperCase()==='KEPALA_DESA' && String(x.STATUS||'AKTIF').toUpperCase()==='AKTIF');
+      if(k) document.getElementById('profilKepala').textContent=k.NAMA||k.NAMA_LENGKAP||'Data mengikuti Struktur Pemerintahan Desa';
+    }
+  }catch(e){}
+}
+function closeProfilDesa(){document.getElementById('profilModal').classList.add('hidden');document.body.style.overflow='';}
+function openPetaDesa(){
+  document.getElementById('petaModal').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+  setTimeout(()=>initCihirupMap(),120);
+}
+function closePetaDesa(){document.getElementById('petaModal').classList.add('hidden');document.body.style.overflow='';}
+function initCihirupMap(){
+  if(typeof L==='undefined'){
+    document.getElementById('desaMap').innerHTML='<div style="padding:30px;text-align:center;color:#718492">Peta belum dapat dimuat. Periksa koneksi internet lalu buka kembali.</div>';return;
+  }
+  if(desaMapInstance){desaMapInstance.invalidateSize();desaMapInstance.setView([CIHIRUP_MAP.lat,CIHIRUP_MAP.lng],CIHIRUP_MAP.zoom);return;}
+  desaMapInstance=L.map('desaMap',{scrollWheelZoom:true}).setView([CIHIRUP_MAP.lat,CIHIRUP_MAP.lng],CIHIRUP_MAP.zoom);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(desaMapInstance);
+  const marker=L.marker([CIHIRUP_MAP.lat,CIHIRUP_MAP.lng]).addTo(desaMapInstance);
+  marker.bindPopup('<b>Kantor Desa Cihirup</b><br>Jalan Raya Buyut Maskar Nomor 127<br>Kec. Ciawigebang, Kab. Kuningan').openPopup();
+  L.circle([CIHIRUP_MAP.lat,CIHIRUP_MAP.lng],{radius:500,weight:1,fillOpacity:.08}).addTo(desaMapInstance);
+  const legend=L.control({position:'bottomright'});legend.onAdd=function(){const d=L.DomUtil.create('div','peta-legend');d.innerHTML='<span class="peta-dot"></span>Kantor Desa Cihirup';return d};legend.addTo(desaMapInstance);
+}
+function centerCihirupMap(){if(!desaMapInstance)initCihirupMap();else desaMapInstance.setView([CIHIRUP_MAP.lat,CIHIRUP_MAP.lng],16);}
+function openGoogleMapsCihirup(){window.open('https://www.google.com/maps/search/?api=1&query=-6.9291667,108.6258333','_blank','noopener');}
+
+
 function openModule(name){
 
   const publicModules = [
@@ -3188,12 +3272,9 @@ function openModule(name){
   ];
 
   if(publicModules.includes(name)){
-    toast(
-      name,
-      'Modul informasi publik "'+
-      name+
-      '" akan diaktifkan bertahap.'
-    );
+    if(name==='Profil Desa'){openProfilDesa();return;}
+    if(name==='Peta Desa'){openPetaDesa();return;}
+    toast(name,'Modul informasi publik akan diaktifkan bertahap.');
     return;
   }
 
@@ -5091,5 +5172,6 @@ document.addEventListener('DOMContentLoaded',function(){document.getElementById(
     </div>
   </div>
 </div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 </body>
 </html>
