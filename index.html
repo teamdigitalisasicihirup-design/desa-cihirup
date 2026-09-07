@@ -1895,12 +1895,16 @@ footer strong{color:var(--blue)}
         <div class="peta-info"><strong>Koordinat</strong><span>6°55′45″ LS • 108°37′33″ BT<br>(-6.929167, 108.625833)</span></div>
         <div class="peta-info"><strong>Wilayah</strong><span>3 Dusun • 24 RT • 3 RW</span></div>
         <div class="peta-actions"><button class="peta-btn primary" onclick="centerCihirupMap()">⌖ Pusatkan</button><button class="peta-btn" onclick="openGoogleMapsCihirup()">↗ Google Maps</button></div>
-        <div class="peta-note">Catatan: garis batas desa belum digambar sebagai polygon karena koordinat titik batas resmi akan kita masukkan pada tahap pemetaan wilayah berikutnya.</div>
+        <div class="peta-layer"><label>Lapisan Titik</label><select id="petaKategoriFilter" onchange="refreshPetaFilter()"><option value="">Semua kategori</option></select></div><button id="petaAdminAdd" class="peta-admin-btn" onclick="openPetaTitikForm()">＋ Tambah Titik Peta</button><div id="petaPointList" class="peta-point-list"></div>
+        <div class="peta-note">Catatan: titik fasilitas/lokasi dapat dikelola perangkat desa. Garis batas desa belum digambar sebagai polygon karena koordinat titik batas resmi akan dimasukkan setelah data batas kartometrik tersedia.</div>
       </aside>
       <div class="peta-map"><div id="desaMap"></div></div>
     </div></div>
   </div>
 </div>
+
+<!-- V41 ADMIN TITIK PETA -->
+<div class="peta-form-modal hidden" id="petaTitikFormModal" role="dialog" aria-modal="true"><div class="peta-form-card"><div class="peta-form-head"><h3 id="petaTitikFormTitle">Tambah Titik Peta</h3><button class="v39-close" type="button" onclick="closePetaTitikForm()">×</button></div><form id="petaTitikForm"><div class="peta-form-body"><input type="hidden" id="petaTitikId"><div class="peta-form-grid"><div class="peta-form-field full"><label>Nama Lokasi *</label><input id="petaTitikNama" required placeholder="Contoh: SDN 2 Cihirup"></div><div class="peta-form-field"><label>Kategori</label><select id="petaTitikKategori"><option>Fasilitas Umum</option><option>Pendidikan</option><option>Kesehatan</option><option>Peribadatan</option><option>Pemerintahan</option><option>UMKM</option><option>Wisata</option><option>Pertanian</option><option>Peternakan</option><option>Potensi Desa</option><option>Lokasi Penting</option></select></div><div class="peta-form-field"><label>Dusun</label><select id="petaTitikDusun"><option value="">Tidak ditentukan</option><option>Kliwon</option><option>Manis</option><option>Wage</option></select></div><div class="peta-form-field"><label>Latitude *</label><input id="petaTitikLat" type="number" step="any" required placeholder="-6.xxxxxxx"></div><div class="peta-form-field"><label>Longitude *</label><input id="petaTitikLng" type="number" step="any" required placeholder="108.xxxxxxx"></div><div class="peta-form-field full"><label>Deskripsi</label><textarea id="petaTitikDeskripsi" placeholder="Keterangan lokasi..."></textarea></div><div class="peta-form-field full"><label>Link Google Maps / Website (opsional)</label><input id="petaTitikLink" type="url" placeholder="https://..."></div><div class="peta-form-field"><label>Status</label><select id="petaTitikStatus"><option value="AKTIF">AKTIF</option><option value="NONAKTIF">NONAKTIF</option></select></div></div><div class="peta-note">Masukkan koordinat lokasi yang benar. Sistem tidak membuat koordinat perkiraan.</div><div class="peta-form-actions"><button type="button" class="peta-form-btn" onclick="closePetaTitikForm()">Batal</button><button type="submit" class="peta-form-btn primary">Simpan Titik</button></div></div></form></div></div>
 
 <div class="toast" id="toast"><strong id="toastTitle">SIAP LANCAR</strong><span id="toastText"></span></div>
 
@@ -3232,19 +3236,30 @@ function openPetaDesa(){
 }
 function closePetaDesa(){document.getElementById('petaModal').classList.add('hidden');document.body.style.overflow='';}
 function initCihirupMap(){
-  if(typeof L==='undefined'){
-    document.getElementById('desaMap').innerHTML='<div style="padding:30px;text-align:center;color:#718492">Peta belum dapat dimuat. Periksa koneksi internet lalu buka kembali.</div>';return;
-  }
-  if(desaMapInstance){desaMapInstance.invalidateSize();desaMapInstance.setView([CIHIRUP_MAP.lat,CIHIRUP_MAP.lng],CIHIRUP_MAP.zoom);return;}
+  if(typeof L==='undefined'){document.getElementById('desaMap').innerHTML='<div style="padding:30px;text-align:center;color:#718492">Peta belum dapat dimuat. Periksa koneksi internet lalu buka kembali.</div>';return;}
+  if(desaMapInstance){desaMapInstance.invalidateSize();desaMapInstance.setView([CIHIRUP_MAP.lat,CIHIRUP_MAP.lng],CIHIRUP_MAP.zoom);loadPetaTitik();return;}
   desaMapInstance=L.map('desaMap',{scrollWheelZoom:true}).setView([CIHIRUP_MAP.lat,CIHIRUP_MAP.lng],CIHIRUP_MAP.zoom);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(desaMapInstance);
   const marker=L.marker([CIHIRUP_MAP.lat,CIHIRUP_MAP.lng]).addTo(desaMapInstance);
   marker.bindPopup('<b>Kantor Desa Cihirup</b><br>Jalan Raya Buyut Maskar Nomor 127<br>Kec. Ciawigebang, Kab. Kuningan').openPopup();
   L.circle([CIHIRUP_MAP.lat,CIHIRUP_MAP.lng],{radius:500,weight:1,fillOpacity:.08}).addTo(desaMapInstance);
   const legend=L.control({position:'bottomright'});legend.onAdd=function(){const d=L.DomUtil.create('div','peta-legend');d.innerHTML='<span class="peta-dot"></span>Kantor Desa Cihirup';return d};legend.addTo(desaMapInstance);
+  loadPetaTitik();
 }
+let petaTitikRows=[],petaTitikLayers=[];
+async function loadPetaTitik(){
+  try{const r=await jsonp('peta_titik_list',{},15000);if(!r?.success)throw new Error(r?.message||'Gagal memuat titik peta.');petaTitikRows=r.data||[];petaTitikLayers.forEach(x=>desaMapInstance?.removeLayer(x));petaTitikLayers=[];const cat=document.getElementById('petaKategoriFilter');if(cat){const old=cat.value;cat.innerHTML='<option value="">Semua kategori</option>'+(r.categories||[]).map(x=>`<option>${esc(x)}</option>`).join('');cat.value=old;}renderPetaTitik();}catch(e){console.warn('Peta titik:',e.message);}
+}
+function renderPetaTitik(){if(!desaMapInstance)return;const filter=(document.getElementById('petaKategoriFilter')?.value||'').toLowerCase();petaTitikRows.filter(r=>!filter||String(r.KATEGORI||'').toLowerCase()===filter).forEach(r=>{const lat=Number(r.LAT),lng=Number(r.LNG);if(!isFinite(lat)||!isFinite(lng))return;const m=L.marker([lat,lng]).addTo(desaMapInstance);m.bindPopup(`<b>${esc(r.NAMA)}</b><br>${esc(r.KATEGORI||'Lokasi')} ${r.DUSUN?'<br>Dusun '+esc(r.DUSUN):''}${r.DESKRIPSI?'<br>'+esc(r.DESKRIPSI):''}${r.LINK?`<br><a href="${esc(r.LINK)}" target="_blank" rel="noopener">Buka tautan</a>`:''}`);petaTitikLayers.push(m);});renderPetaPointList();}
+function renderPetaPointList(){const box=document.getElementById('petaPointList');if(!box)return;if(!petaTitikRows.length){box.innerHTML='<div class="peta-note">Belum ada titik tambahan.</div>';return;}if(!v40AdminOK()){box.innerHTML='';return;}box.innerHTML=petaTitikRows.map(r=>`<div class="peta-point-row"><div><strong>${esc(r.NAMA)}</strong><span>${esc(r.KATEGORI||'Lokasi')} • ${esc(r.DUSUN||'-')} • ${esc(r.LAT)}, ${esc(r.LNG)}</span></div><div class="peta-point-actions"><button onclick="editPetaTitik('${esc(r.ID_TITIK)}')">Edit</button><button onclick="deletePetaTitik('${esc(r.ID_TITIK)}')">Hapus</button></div></div>`).join('');}
 function centerCihirupMap(){if(!desaMapInstance)initCihirupMap();else desaMapInstance.setView([CIHIRUP_MAP.lat,CIHIRUP_MAP.lng],16);}
 function openGoogleMapsCihirup(){window.open('https://www.google.com/maps/search/?api=1&query=-6.9291667,108.6258333','_blank','noopener');}
+function openPetaTitikForm(id=''){if(!v40AdminOK()){openLoginChooser('Silakan Login Perangkat untuk mengelola titik peta.');return;}const r=petaTitikRows.find(x=>String(x.ID_TITIK)===String(id));document.getElementById('petaTitikId').value=r?.ID_TITIK||'';document.getElementById('petaTitikNama').value=r?.NAMA||'';document.getElementById('petaTitikKategori').value=r?.KATEGORI||'Fasilitas Umum';document.getElementById('petaTitikDusun').value=r?.DUSUN||'';document.getElementById('petaTitikLat').value=r?.LAT||'';document.getElementById('petaTitikLng').value=r?.LNG||'';document.getElementById('petaTitikDeskripsi').value=r?.DESKRIPSI||'';document.getElementById('petaTitikLink').value=r?.LINK||'';document.getElementById('petaTitikStatus').value=r?.STATUS||'AKTIF';document.getElementById('petaTitikFormTitle').textContent=id?'Edit Titik Peta':'Tambah Titik Peta';document.getElementById('petaTitikFormModal').classList.remove('hidden');}
+function closePetaTitikForm(){document.getElementById('petaTitikFormModal').classList.add('hidden');}
+function editPetaTitik(id){openPetaTitikForm(id);}
+async function deletePetaTitik(id){if(!confirm('Hapus titik peta ini?'))return;try{const r=await jsonp('peta_titik_delete',{userId:currentUser.userCode,token:currentSession,id},15000);if(!r?.success)throw new Error(r?.message||'Gagal menghapus.');toast('Peta Desa',r.message||'Titik dihapus.');loadPetaTitik();}catch(e){toast('Peta Desa',e.message||'Gagal.');}}
+function refreshPetaFilter(){if(desaMapInstance){petaTitikLayers.forEach(x=>desaMapInstance.removeLayer(x));petaTitikLayers=[];renderPetaTitik();}}
+document.getElementById('petaTitikForm')?.addEventListener('submit',async e=>{e.preventDefault();const id=document.getElementById('petaTitikId').value;const data={NAMA:document.getElementById('petaTitikNama').value,KATEGORI:document.getElementById('petaTitikKategori').value,DUSUN:document.getElementById('petaTitikDusun').value,LAT:document.getElementById('petaTitikLat').value,LNG:document.getElementById('petaTitikLng').value,DESKRIPSI:document.getElementById('petaTitikDeskripsi').value,LINK:document.getElementById('petaTitikLink').value,STATUS:document.getElementById('petaTitikStatus').value};try{const r=await jsonp(id?'peta_titik_update':'peta_titik_add',{userId:currentUser.userCode,token:currentSession,id,data:JSON.stringify(data)},18000);if(!r?.success)throw new Error(r?.message||'Gagal menyimpan.');closePetaTitikForm();toast('Peta Desa',r.message||'Tersimpan.');loadPetaTitik();}catch(e){toast('Peta Desa',e.message||'Gagal menyimpan.');}});
 
 
 function openModule(name){
